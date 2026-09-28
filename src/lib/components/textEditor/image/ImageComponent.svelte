@@ -95,7 +95,7 @@
 		window.removeEventListener('pointermove', resize);
 		window.removeEventListener('pointerup', stopResize);
 	}
-	let imageRef: HTMLImageElement | null = null;
+	let imageRef: HTMLImageElement | null = $state(null);
 </script>
 
 <svelte:document

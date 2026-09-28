@@ -2,21 +2,15 @@
 	import './layout.css';
 	import { toggleMode, ModeWatcher } from 'mode-watcher';
 	import type { LayoutProps } from './$types';
-	import Button, { buttonVariants } from '#lib/components/ui/button/button.svelte';
+	import Button from '#lib/components/ui/button/button.svelte';
 	import { enhance } from '$app/forms';
 	import { cn } from '#lib/utils';
 	import { page } from '$app/state';
 	import { MoonIcon, SunIcon } from 'lucide-svelte';
 	import { bgImages } from '#lib/generated/images';
-	import * as Drawer from '#lib/components/ui/drawer/';
-	import * as Breadcrumb from '#lib/components/ui/breadcrumb/';
-	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/';
 	import { MediaQuery } from 'svelte/reactivity';
 
 	let { children, data }: LayoutProps = $props();
-	const ITEMS_TO_DISPLAY = 6;
-	$inspect(data.breadcrumbs);
-	let open = $state(false);
 
 	let manageItems = $derived.by(() => {
 		let items = [];
@@ -26,10 +20,10 @@
 		return items;
 	});
 
-	const isDesktop = new MediaQuery('(min-width: 768px)');
+	const isDesktop = new MediaQuery('(min-width: 64rem)');
 </script>
 
-{#snippet link({ label, href }: { label: string; href: string })}
+{#snippet link({ label, href }: { label: string; href: string | undefined })}
 	<li>
 		<a
 			class={cn(
@@ -52,35 +46,45 @@
 	href: string | undefined;
 	items: { label: string; href: string }[];
 })}
-	<div class="group/dd relative">
-		<button
-			type="button"
-			class={cn(
-				'block border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
-				{
-					'border-accent': page.url.pathname === href
-				}
-			)}
-			aria-haspopup="true">
-			{label}
-			<i class="bi bi-chevron-down text-xs transition-transform group-hover/dd:rotate-180"></i>
-		</button>
-		<div
-			class="invisible absolute top-full left-0 z-20 pt-3 opacity-0 transition-opacity duration-200 group-focus-within/dd:visible group-focus-within/dd:opacity-100 group-hover/dd:visible group-hover/dd:opacity-100">
-			<ul
-				class="min-w-50 rounded-xl border border-white/10 bg-black/80 p-2 text-white backdrop-blur">
-				{#each items as item, i (i)}
-					<li>
-						<a
-							href={item.href}
-							class="block rounded-md px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white">
-							{item.label}
-						</a>
-					</li>
-				{/each}
-			</ul>
+	{#if isDesktop.current}
+		<div class="group/dd relative">
+			<a
+				type="button"
+				{href}
+				class={cn(
+					'block border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
+					{
+						'border-accent': page.url.pathname === href
+					}
+				)}
+				aria-haspopup="true">
+				{label}
+				<i class="bi bi-chevron-down text-xs transition-transform group-hover/dd:rotate-180"></i>
+			</a>
+			<div
+				class="invisible absolute top-full left-0 z-20 pt-3 opacity-0 transition-opacity duration-200 group-focus-within/dd:visible group-focus-within/dd:opacity-100 group-hover/dd:visible group-hover/dd:opacity-100">
+				<ul
+					class="min-w-50 rounded-xl border border-white/10 bg-black/80 p-2 text-white backdrop-blur">
+					{#each items as item, i (i)}
+						<li>
+							<a
+								href={item.href}
+								class="block rounded-md px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white">
+								{item.label}
+							</a>
+						</li>
+					{/each}
+				</ul>
+			</div>
 		</div>
-	</div>
+	{:else}
+		{#if href}
+			{@render link({ href, label })}
+		{/if}
+		{#each items as item, i (i)}
+			{@render link({ href: item.href, label: item.label })}
+		{/each}
+	{/if}
 {/snippet}
 <ModeWatcher defaultMode="dark" />
 <svelte:head>
@@ -109,8 +113,7 @@
 
 	<div class="hidden w-full lg:flex lg:w-auto lg:items-center" id="menu">
 		<nav>
-			<ul
-				class="items-center justify-between pt-4 font-[hylia] text-base text-foreground lg:flex lg:pt-0">
+			<ul class="items-center justify-between pt-4 text-base text-foreground lg:flex lg:pt-0">
 				{@render link({ href: '/', label: 'Home' })}
 				{#if data.paths['activity']}
 					{@render dropdown({

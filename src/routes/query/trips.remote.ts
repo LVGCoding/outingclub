@@ -114,6 +114,9 @@ export const signUp = command(
 		const user = await getCurrentUser();
 		if (!user) {
 			return 'User not found';
+    }
+    if (!inUserPayperiod(user.paidDuesEnd)) {
+			return 'Pay your dues man';
 		}
 		if (!hasPermission({ trip: ['signup'] }, user?.id)) {
 			return 'You do not have permission to signup';
@@ -381,7 +384,6 @@ export const updateTripStatus = command(
 	}
 );
 
-// TODO  add notes to user
 export const updateParticipantStatus = command(
 	v.object({
 		participantId: v.string(),
@@ -419,18 +421,19 @@ export const updateUserPassword = command(
 
 export const getUsers = query(async () => {
 	if (!hasPermission({ user: ['view'] })) throw new Error('Permission Denied');
-	return await db.query.user.findMany({
-		columns: {
-			createdAt: true,
-			email: true,
-			id: true,
-			name: true,
-			notes: true,
-			phoneNumber: true,
-			role: true,
-			yearJoined: true
-		}
-	});
+	return (await db.query.user.findMany({
+			columns: {
+				createdAt: true,
+				email: true,
+				id: true,
+				name: true,
+				notes: true,
+				phoneNumber: true,
+				role: true,
+      yearJoined: true,
+				paidDuesEnd:true,
+			}
+		})).map((el) => ({...el, paidDues: inUserPayperiod(el.paidDuesEnd)}));
 });
 
 export const updateUser = command(
@@ -479,6 +482,49 @@ export const updateUserNotes = command(
 	}
 );
 
+export const updateUserPaid = command(
+	v.object({
+		id: v.string(),
+    paid: v.boolean(),
+		semesters: v.union([v.literal(1), v.literal(2)])
+	}),
+	async ({ id, paid,semesters }) => {
+		if (!hasPermission({ user: ['update'] }))
+			throw new Error('You dont have permission to do that');
+		const existingUser = await db.query.user.findFirst({
+			where: eq(user.id, id),
+			columns: { id: true }
+		});
+		if (!existingUser) {
+			throw new Error('User not found');
+    }
+    const month = new Date().getMonth();
+    const year = new Date().getFullYear();
+    let ending = "";
+    if (!paid) {
+      ending = "1999/10"
+    }
+    else if (month >= 7 && month <= 11) {
+      if (semesters === 2) {
+        ending = year + 1 + "/" + 4;
+      } else {
+        ending = year + "/" + 11;
+      }
+    } else if (semesters === 2) {
+      ending = "";
+    } else if (month >=0  && month < 4) {
+      ending = year + "/" + 4;
+    } else if (month >=0  && month < 7) {
+      ending = year + "/" + 7;
+    }
+
+    if (ending === "") {
+      throw new Error("Invaild pay period")
+    }
+		await db.update(user).set({ paidDuesEnd:ending }).where(eq(user.id, id));
+	}
+);
+
 export const deleteUser = command(v.object({ userId: v.string() }), async ({ userId }) => {
 	if (!hasPermission({ user: ['delete'] })) throw new Error("I can't let you do that dave");
 	const event = getRequestEvent();
@@ -489,3 +535,13 @@ export const deleteUser = command(v.object({ userId: v.string() }), async ({ use
 		headers: event.request.headers
 	});
 });
+
+function inUserPayperiod(paidEnd: string): boolean {
+  const split = paidEnd.split("/");
+  const date = new Date();
+  if (split.length !== 2) return false
+  if (Number(split[0]) < date.getFullYear()) return false;
+  if (Number(split[0]) === date.getFullYear() && Number(split[1]) < date.getMonth()) return false;
+
+  return true;
+}

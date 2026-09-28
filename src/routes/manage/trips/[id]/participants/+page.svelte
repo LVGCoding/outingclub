@@ -9,7 +9,6 @@
 	import { page } from '$app/state';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/';
 	import { goto } from '$app/navigation';
-	import { getLayout } from '../../../../context';
 	import ParticipantsData from '#lib/components/ParticipantsData.svelte';
 
 	const data = getTripParticipants({ id: page.params.id ?? '' });
@@ -24,18 +23,6 @@
 		attended: 'Attended',
 		no_show: 'No-show'
 	};
-	$effect(() => {
-		getLayout().crumbs = [
-			{ href: '/', label: 'Home' },
-			{ href: undefined, label: 'Manage' },
-			{ href: '/manage/trips', label: 'Trips' },
-			{
-				href: '/manage/trips/' + page.params.id,
-				label: data.current?.trip?.title ?? page.params.id ?? ''
-			},
-			{ href: '/manage/trips/' + page.params.id + '/participants', label: 'Participants' }
-		];
-	});
 
 	async function changeStatus(participantId: string, status: Status) {
 		updatingParticipant = participantId;

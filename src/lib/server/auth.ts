@@ -46,7 +46,8 @@ export const auth = betterAuth({
 			roles: {
 				admin,
 				leader,
-				member
+        member,
+				viewer
 			}
 		}),
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array,
@@ -55,7 +56,8 @@ export const auth = betterAuth({
 		additionalFields: {
 			phoneNumber: { type: 'string', optional: false },
 			yearJoined: { type: 'number', optional: false, defaultValue: 2000 },
-			notes: { type: 'string', optional: true, defaultValue: '' }
+      notes: { type: 'string', optional: true, defaultValue: '' },
+			paidDuesEnd: {type:"string", defaultValue: "2010/12" }
 		}
 	}
 });

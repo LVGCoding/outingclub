@@ -66,7 +66,6 @@
 	let {
 		content = $bindable(),
 		onChange,
-		// eslint-disable-next-line no-useless-assignment
 		editable
 	}: {
 		content?: string | null;

@@ -23,6 +23,7 @@ export const user = sqliteTable("user", {
   phoneNumber: text("phone_number").notNull(),
   yearJoined: integer("year_joined").default(2000).notNull(),
   notes: text("notes").default("").notNull(),
+  paidDuesEnd: text("paid_dues_end").default("2010/12").notNull(),
 });
 
 export const session = sqliteTable(

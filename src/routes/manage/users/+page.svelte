@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button } from '#lib/components/ui/button';
+	import { Button, buttonVariants } from '#lib/components/ui/button';
 	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
 	import { Textarea } from '#lib/components/ui/textarea';
@@ -13,10 +13,13 @@
 		getUsers,
 		updateUser,
 		updateUserNotes,
+		updateUserPaid,
 		updateUserPassword
 	} from '../../query/trips.remote';
 	import type { PageProps } from './$types';
 	import { Swal2 } from '#lib/utils';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/';
+	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
 
 	let pageData: PageProps = $props();
 
@@ -125,6 +128,28 @@
 			saving = false;
 		}
 	}
+
+	let semestersPaid = (user: (typeof filteredUsers)[0]) => {
+		let split = user.paidDuesEnd.split('/');
+		let month = new Date().getMonth();
+		let year = new Date().getFullYear();
+		console.log(Number(split[1]), month);
+		if (Number(split[0]) < year) {
+			return [];
+		} else if (year === Number(split[0])) {
+			if (Number(split[1]) < month) return [];
+			if (Number(split[1]) == 4) {
+				return ['Spring ' + year];
+			} else if (Number(split[1]) === 7) {
+				return ['Summer ' + year];
+			} else if (Number(split[1]) === 11) {
+				return ['Fall ' + year];
+			}
+		} else if (Number(split[0]) > year) {
+			return ['Fall ' + year, 'Spring ' + split[0]];
+		}
+		return [];
+	};
 </script>
 
 <div class="flex flex-col items-center justify-center">
@@ -167,12 +192,15 @@
 
 									<th class="px-4 py-3 text-left font-medium">Notes</th>
 
+									<th class="px-4 py-3 text-left font-medium">Paid</th>
+
 									<th class="w-24 px-4 py-3"></th>
 								</tr>
 							</thead>
 
 							<tbody class="divide-y">
 								{#each filteredUsers as user (user.id)}
+									{@const sems = semestersPaid(user)}
 									<tr class="hover:bg-muted/30">
 										<td class="px-4 py-3">
 											<div class="font-medium">
@@ -190,9 +218,13 @@
 
 										<td class="px-4 py-3">
 											{#if user.role === 'admin'}
-												<Badge>Admin</Badge>
-											{:else}
+												<Badge variant="destructive">Admin</Badge>
+											{:else if user.role === 'leader'}
+												<Badge>Member</Badge>
+											{:else if user.role === 'member'}
 												<Badge variant="secondary">Member</Badge>
+											{:else}
+												<Badge variant="outline">Viewer</Badge>
 											{/if}
 										</td>
 
@@ -202,6 +234,18 @@
 
 										<td class="px-4 py-3 text-muted-foreground">
 											{user.notes}
+										</td>
+
+										<td class="px-4 py-3 text-muted-foreground">
+											<div class="flex flex-col gap-1">
+												{#if sems.length === 0}
+													<Badge>Not Paid</Badge>
+												{:else}
+													{#each sems as sem, i (i)}
+														<Badge>{sem}</Badge>
+													{/each}
+												{/if}
+											</div>
 										</td>
 
 										<td class="flex gap-2 px-4 py-3 text-right">
@@ -216,25 +260,76 @@
 												</Button>
 											{/if}
 											{#if pageData.data.deleteUser}
-												<Button
-													variant="outline"
-													size="sm"
-													onclick={async () => {
-														const confirm = await Swal2.fire({
-															title: 'Delete User',
-															text: 'Are you sure you want to delete this sser?',
-															icon: 'warning',
-															showCancelButton: true,
-															confirmButtonText: 'Delete',
-															cancelButtonText: 'Cancel'
-														});
-														if (!confirm.isConfirmed) return;
+												<DropdownMenu.Root>
+													<DropdownMenu.Trigger
+														class={buttonVariants({ variant: 'outline', size: 'sm' })}>
+														...
+													</DropdownMenu.Trigger>
+													<DropdownMenu.Content>
+														<DropdownMenu.Group>
+															<DropdownMenu.Label>Trip Actions</DropdownMenu.Label>
+															<DropdownMenu.Separator />
+															<ActionWrapper
+																onclick={async () => {
+																	await updateUserPaid({ id: user.id, paid: true, semesters: 2 });
+																	data.refresh();
+																}}>
+																{#snippet children({ props, spinnerIcon })}
+																	<DropdownMenu.Item {...props} title="User paid for 2 semesters">
+																		{@render spinnerIcon()}
+																		Paid 2 semester
+																	</DropdownMenu.Item>
+																{/snippet}
+															</ActionWrapper>
+															<ActionWrapper
+																onclick={async () => {
+																	await updateUserPaid({ id: user.id, paid: true, semesters: 1 });
+																	data.refresh();
+																}}>
+																{#snippet children({ props, spinnerIcon })}
+																	<DropdownMenu.Item {...props} title="User paid for 1 semester">
+																		{@render spinnerIcon()}
+																		Paid 1 semester
+																	</DropdownMenu.Item>
+																{/snippet}
+															</ActionWrapper>
+															<ActionWrapper
+																onclick={async () => {
+																	await updateUserPaid({ id: user.id, paid: false, semesters: 1 });
+																	data.refresh();
+																}}>
+																{#snippet children({ props, spinnerIcon })}
+																	<DropdownMenu.Item {...props} title="Set this user to unpaid">
+																		{@render spinnerIcon()}
+																		Mark user unpaied
+																	</DropdownMenu.Item>
+																{/snippet}
+															</ActionWrapper>
+															<ActionWrapper
+																onclick={async () => {
+																	const confirm = await Swal2.fire({
+																		title: 'Delete User',
+																		text: 'Are you sure you want to delete this sser?',
+																		icon: 'warning',
+																		showCancelButton: true,
+																		confirmButtonText: 'Delete',
+																		cancelButtonText: 'Cancel'
+																	});
+																	if (!confirm.isConfirmed) return;
 
-														deleteUser({ userId: user.id });
-														data.refresh();
-													}}>
-													Delete
-												</Button>
+																	await deleteUser({ userId: user.id });
+																	data.refresh();
+																}}>
+																{#snippet children({ props, spinnerIcon })}
+																	<DropdownMenu.Item {...props} title="Delete this user">
+																		{@render spinnerIcon()}
+																		Delete
+																	</DropdownMenu.Item>
+																{/snippet}
+															</ActionWrapper>
+														</DropdownMenu.Group>
+													</DropdownMenu.Content>
+												</DropdownMenu.Root>
 											{/if}
 										</td>
 									</tr>

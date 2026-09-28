@@ -100,7 +100,7 @@
 							let result = await deleteTrip({ id: trip.id ?? '' });
 							if (result) {
 								Swal2.fire('Success', 'Trip deleted successfully', 'success');
-								goto('/manageTrips');
+								goto('/manage/trips');
 							}
 						}}>
 						{#snippet children({ props, spinnerIcon })}
