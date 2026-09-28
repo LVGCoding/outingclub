@@ -1,0 +1,2 @@
+words = ["jsdom"]
+ignore_paths = ["src/routes/query/trips.remote.ts"]
