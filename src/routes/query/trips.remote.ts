@@ -1,7 +1,7 @@
-import { tripLeaders, tripParticipants, trips, user } from '#lib/server/db/schema';
+import { account, tripLeaders, tripParticipants, trips, user } from '#lib/server/db/schema';
 import { command, getRequestEvent, query } from '$app/server';
 import { db } from '#lib/server/db';
-import { and, eq, inArray, or } from 'drizzle-orm';
+import { and, eq, inArray, or, lt } from 'drizzle-orm';
 import { auth, getCurrentUser, hasPermission } from '#lib/server/auth';
 import * as v from 'valibot';
 import { type formElement, type formResponse } from '#lib/components/FormElement.svelte';
@@ -114,8 +114,8 @@ export const signUp = command(
 		const user = await getCurrentUser();
 		if (!user) {
 			return 'User not found';
-    }
-    if (!inUserPayperiod(user.paidDuesEnd)) {
+		}
+		if (!inUserPayperiod(user.paidDuesEnd)) {
 			return 'Pay your dues man';
 		}
 		if (!hasPermission({ trip: ['signup'] }, user?.id)) {
@@ -421,7 +421,8 @@ export const updateUserPassword = command(
 
 export const getUsers = query(async () => {
 	if (!hasPermission({ user: ['view'] })) throw new Error('Permission Denied');
-	return (await db.query.user.findMany({
+	return (
+		await db.query.user.findMany({
 			columns: {
 				createdAt: true,
 				email: true,
@@ -430,10 +431,11 @@ export const getUsers = query(async () => {
 				notes: true,
 				phoneNumber: true,
 				role: true,
-      yearJoined: true,
-				paidDuesEnd:true,
+				yearJoined: true,
+				paidDuesEnd: true
 			}
-		})).map((el) => ({...el, paidDues: inUserPayperiod(el.paidDuesEnd)}));
+		})
+	).map((el) => ({ ...el, paidDues: inUserPayperiod(el.paidDuesEnd) }));
 });
 
 export const updateUser = command(
@@ -485,10 +487,10 @@ export const updateUserNotes = command(
 export const updateUserPaid = command(
 	v.object({
 		id: v.string(),
-    paid: v.boolean(),
+		paid: v.boolean(),
 		semesters: v.union([v.literal(1), v.literal(2)])
 	}),
-	async ({ id, paid,semesters }) => {
+	async ({ id, paid, semesters }) => {
 		if (!hasPermission({ user: ['update'] }))
 			throw new Error('You dont have permission to do that');
 		const existingUser = await db.query.user.findFirst({
@@ -497,31 +499,30 @@ export const updateUserPaid = command(
 		});
 		if (!existingUser) {
 			throw new Error('User not found');
-    }
-    const month = new Date().getMonth();
-    const year = new Date().getFullYear();
-    let ending = "";
-    if (!paid) {
-      ending = "1999/10"
-    }
-    else if (month >= 7 && month <= 11) {
-      if (semesters === 2) {
-        ending = year + 1 + "/" + 4;
-      } else {
-        ending = year + "/" + 11;
-      }
-    } else if (semesters === 2) {
-      ending = "";
-    } else if (month >=0  && month < 4) {
-      ending = year + "/" + 4;
-    } else if (month >=0  && month < 7) {
-      ending = year + "/" + 7;
-    }
+		}
+		const month = new Date().getMonth();
+		const year = new Date().getFullYear();
+		let ending = '';
+		if (!paid) {
+			ending = '1999/10';
+		} else if (month >= 7 && month <= 11) {
+			if (semesters === 2) {
+				ending = year + 1 + '/' + 4;
+			} else {
+				ending = year + '/' + 11;
+			}
+		} else if (semesters === 2) {
+			ending = '';
+		} else if (month >= 0 && month < 4) {
+			ending = year + '/' + 4;
+		} else if (month >= 0 && month < 7) {
+			ending = year + '/' + 7;
+		}
 
-    if (ending === "") {
-      throw new Error("Invaild pay period")
-    }
-		await db.update(user).set({ paidDuesEnd:ending }).where(eq(user.id, id));
+		if (ending === '') {
+			throw new Error('Invaild pay period');
+		}
+		await db.update(user).set({ paidDuesEnd: ending }).where(eq(user.id, id));
 	}
 );
 
@@ -537,11 +538,19 @@ export const deleteUser = command(v.object({ userId: v.string() }), async ({ use
 });
 
 function inUserPayperiod(paidEnd: string): boolean {
-  const split = paidEnd.split("/");
-  const date = new Date();
-  if (split.length !== 2) return false
-  if (Number(split[0]) < date.getFullYear()) return false;
-  if (Number(split[0]) === date.getFullYear() && Number(split[1]) < date.getMonth()) return false;
+	const split = paidEnd.split('/');
+	const date = new Date();
+	if (split.length !== 2) return false;
+	if (Number(split[0]) < date.getFullYear()) return false;
+	if (Number(split[0]) === date.getFullYear() && Number(split[1]) < date.getMonth()) return false;
 
-  return true;
+	return true;
 }
+
+export const removeOldUsers = command(async () => {
+	if (!hasPermission({ user: ['delete'] })) throw new Error("I can't let you do that dave");
+	const oneYearAgoMs = new Date(Date.now() - 63072000000);
+
+	// 2. Query using the integer timestamp
+	await db.delete(user).where(lt(user.lastLogin, oneYearAgoMs));
+});

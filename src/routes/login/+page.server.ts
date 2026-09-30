@@ -70,7 +70,8 @@ export const actions: Actions = {
 					name: `${firstName} ${lastName}`,
 					callbackURL: '/auth/verification-success',
 					phoneNumber: phoneNumber,
-					yearJoined: Number(yearJoined)
+					yearJoined: Number(yearJoined),
+					lastLogin: new Date()
 				}
 			});
 		} catch (error) {

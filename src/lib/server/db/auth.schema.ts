@@ -24,6 +24,9 @@ export const user = sqliteTable("user", {
   yearJoined: integer("year_joined").default(2000).notNull(),
   notes: text("notes").default("").notNull(),
   paidDuesEnd: text("paid_dues_end").default("2010/12").notNull(),
+  lastLogin: integer("last_login", { mode: "timestamp_ms" })
+    .default("CURRENT_TIMESTAMP()")
+    .notNull(),
 });
 
 export const session = sqliteTable(

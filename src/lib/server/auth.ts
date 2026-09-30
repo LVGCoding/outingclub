@@ -5,6 +5,8 @@ import { sveltekitCookies } from 'better-auth/svelte-kit';
 import { getRequestEvent } from '$app/server';
 import { db } from '#lib/server/db';
 import { admin as adminPlugin, createAccessControl } from 'better-auth/plugins';
+import { createAuthMiddleware } from 'better-auth/api';
+import { user as userDb } from '#lib/server/db/schema';
 
 export const statement = {
 	trip: ['create', 'signup', 'update', 'delete', 'manage'],
@@ -46,18 +48,27 @@ export const auth = betterAuth({
 			roles: {
 				admin,
 				leader,
-        member,
+				member,
 				viewer
 			}
 		}),
 		sveltekitCookies(getRequestEvent) // make sure this is the last plugin in the array,
 	],
+	hooks: {
+		after: createAuthMiddleware(async (ctx) => {
+			const user = ctx.context.newSession?.user;
+			if (user) {
+				await db.update(userDb).set({ lastLogin: new Date() });
+			}
+		})
+	},
 	user: {
 		additionalFields: {
 			phoneNumber: { type: 'string', optional: false },
 			yearJoined: { type: 'number', optional: false, defaultValue: 2000 },
-      notes: { type: 'string', optional: true, defaultValue: '' },
-			paidDuesEnd: {type:"string", defaultValue: "2010/12" }
+			notes: { type: 'string', optional: true, defaultValue: '' },
+			paidDuesEnd: { type: 'string', defaultValue: '2010/12' },
+			lastLogin: { type: 'date', defaultValue: 'CURRENT_TIMESTAMP()' }
 		}
 	}
 });

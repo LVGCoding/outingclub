@@ -52,7 +52,7 @@ export default defineConfig({
 		})
 	],
 	optimizeDeps: {
-		exclude: ['svelte-sonner', '@thisux/sveltednd']
+		exclude: ['svelte-sonner', '@thisux/sveltednd', '@tanstack/svelte-table']
 	},
 	server: {
 		allowedHosts: ['8sybnhrswq.localto.net']
