@@ -36,7 +36,7 @@
 
 <div class="flex flex-col items-center justify-center gap-2">
 	<img src="/logo.png" alt="logo" />
-	<Card.Root class="w-[98%] lg:w-[80%]">
+	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<Card.Header>
 			<Card.Title>Hidden Trips</Card.Title>
 		</Card.Header>
@@ -185,7 +185,7 @@
 			</Card.Root>
 		</Card.Content>
 	</Card.Root>
-	<Card.Root class="w-[98%] lg:w-[80%]">
+	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<Card.Header>
 			<Card.Title>Pending Trips</Card.Title>
 		</Card.Header>
@@ -316,7 +316,7 @@
 		</Card.Content>
 	</Card.Root>
 
-	<Card.Root class="w-[98%] lg:w-[80%]">
+	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<Card.Header>
 			<Card.Title>Finished Trips</Card.Title>
 		</Card.Header>

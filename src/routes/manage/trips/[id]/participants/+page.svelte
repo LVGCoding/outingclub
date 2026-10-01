@@ -13,14 +13,19 @@
 	import { goto } from '$app/navigation';
 	import ParticipantsData from '#lib/components/ParticipantsData.svelte';
 
-	import type { ColumnDef } from '@tanstack/svelte-table';
+	import {
+		filterFn_includesString,
+		renderSnippet,
+		type ColumnDef,
+		type TableFeatures
+	} from '@tanstack/svelte-table';
 	import type { DataTableColumnMeta } from '#lib/components/dataTable/DataTable.svelte';
 	import DataTable from '#lib/components/dataTable/DataTable.svelte';
+	import type { formElement } from '#lib/components/FormElement.svelte';
 
 	const data = getTripParticipants({
 		id: page.params.id ?? ''
 	});
-
 	type Result = NonNullable<typeof data.current>;
 	type Participant = Result['participants'][number];
 
@@ -67,15 +72,6 @@
 		}).format(new Date(date));
 	}
 
-	function getInitials(name: string) {
-		return name
-			.split(' ')
-			.map((name) => name[0])
-			.join('')
-			.slice(0, 2)
-			.toUpperCase();
-	}
-
 	function getClassName(yearJoined: number) {
 		const now = new Date();
 
@@ -103,20 +99,71 @@
 		return Array.isArray(value) ? value.join(', ') : value;
 	}
 
-	const columns: ColumnDef<any, Participant>[] = [
+	const formColumns = $derived.by(() => {
+		let columns: ColumnDef<TableFeatures, Participant>[] = [];
+		if (!data.current) return [];
+		for (const i of data.current.trip.formElements) {
+			let column = {
+				id: i.label,
+				header: i.label,
+				accessorFn: (participant: Participant) =>
+					String(participant.signup.formData.find((el) => el?.label === i.label)?.value),
+				meta: {
+					filter: 'text',
+					filterPlaceholder: 'Search name or email'
+				} as DataTableColumnMeta,
+				filterFn: filterFn_includesString
+			} as ColumnDef<TableFeatures, Participant>;
+
+			if (i.type === 'checkbox') {
+				column.filterFn = (row, columnId, value: { value: string[]; requireAll: boolean }) => {
+					if (!value) return true;
+					if (!value.value) return true;
+					value.value.sort();
+					let data = (
+						(row.original.signup.formData.find((el) => el?.label === i.label)?.value ??
+							[]) as string[]
+					).toSorted();
+					if (value.requireAll) {
+						return value.value.toString() === data.toString();
+					}
+					return value.value.some((el) => data.includes(el));
+				};
+				column.meta = {
+					filter: 'select',
+					filterPlaceholder: 'Any class',
+					filterOptions: i.options.map((el) => ({
+						label: el.value,
+						value: el.value
+					})),
+					multi: true
+				};
+			} else if (i.type === 'radio') {
+				column.filterFn = (row, columnId, value) => {
+					if (!value) return true;
+					return value.includes(row.getValue<number>(columnId));
+				};
+				column.meta = {
+					filter: 'select',
+					filterPlaceholder: 'Any class',
+					filterOptions: i.options.map((el) => ({
+						label: el.value,
+						value: el.value
+					}))
+				};
+			}
+
+			columns.push(column);
+		}
+		return columns;
+	});
+
+	const columns = [
 		{
 			id: 'participant',
 			header: 'Participant',
 
 			accessorFn: (participant: Participant) => participant.user.name,
-
-			cell: ({ row }) => {
-				const participant = row.original;
-
-				return {
-					participant
-				};
-			},
 
 			filterFn: (row, _columnId, value) => {
 				if (!value) return true;
@@ -146,7 +193,7 @@
 
 		{
 			id: 'activityTrips',
-			header: 'Activity trips',
+			header: data.current?.trip.activity + ' trips',
 
 			accessorFn: (participant: Participant) => participant.history.currentActivityTrips,
 
@@ -180,9 +227,7 @@
 			cell: ({ row }) => {
 				const participant = row.original;
 
-				return {
-					participant
-				};
+				return renderSnippet(Status, participant);
 			},
 
 			filterFn: (row, columnId, value) => {
@@ -229,19 +274,35 @@
 					}
 				]
 			} satisfies DataTableColumnMeta
-		}
-	];
-
-	function ParticipantCell({ participant }: { participant: Participant }) {
-		return;
-	}
+		},
+		...formColumns
+	] satisfies ColumnDef<TableFeatures, Participant>[];
 </script>
 
-```svelte
+{#snippet Status(participant: Participant)}
+	<Select.Root
+		type="single"
+		value={participant.signup.status}
+		onValueChange={(value) => changeStatus(participant.id, value as Status)}>
+		<Select.Trigger class="w-32.5" disabled={updatingParticipant === participant.id}>
+			<Select.Value>
+				{statusLabels[participant.signup.status as Status]}
+			</Select.Value>
+		</Select.Trigger>
+		<Select.Content>
+			<Select.Item value="pending">Pending</Select.Item>
+			<Select.Item value="accepted">Accepted</Select.Item>
+			<Select.Item value="attended">Attended</Select.Item>
+			<Select.Item value="no_show">No-show</Select.Item>
+			<Select.Item value="cancelled">Cancelled</Select.Item>
+			<Select.Item value="declined">Declined</Select.Item>
+		</Select.Content>
+	</Select.Root>
+{/snippet}
 
 <div class="flex flex-col items-center justify-center gap-2">
 	{#await data}
-		<Card.Root class="w-[98%] lg:w-[80%]">
+		<Card.Root class="w-[98%] p-4 lg:w-[90%]">
 			<Card.Header>
 				<Skeleton class="h-6 w-48" />
 			</Card.Header>
@@ -260,7 +321,7 @@
 			</Card.Content>
 		</Card.Root>
 	{:then result}
-		<Card.Root class="w-[98%] p-4 lg:w-[80%]">
+		<Card.Root class="w-[98%] p-4 lg:w-[90%]">
 			<Card.Header>
 				<div class="flex items-center justify-center">
 					<ToggleGroup.Root class="w-80" type="single" value="b">
@@ -324,9 +385,6 @@
 											</div>
 
 											<div class="text-muted-foreground">
-												Member since
-												{participant.user.yearJoined}
-												·
 												{getClassName(participant.user.yearJoined)}
 											</div>
 										</div>
@@ -449,81 +507,6 @@
 									</div>
 								{/if}
 							</div>
-						{/snippet}
-
-						<!-- Override the default cell rendering for the participant
-						     and status columns. -->
-						{#snippet cell({ cell })}
-							{@const participant = cell.row.original}
-
-							{#if cell.column.id === 'participant'}
-								<div class="flex min-w-0 items-center gap-3">
-									<div
-										class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
-										{#if participant.user.image}
-											<img
-												src={participant.user.image}
-												alt={participant.user.name}
-												class="h-full w-full object-cover" />
-										{:else}
-											<span class="text-sm font-medium">
-												{getInitials(participant.user.name)}
-											</span>
-										{/if}
-									</div>
-
-									<div class="min-w-0">
-										<div class="flex items-center gap-2">
-											<span class="truncate font-medium">
-												{participant.user.name}
-											</span>
-
-											{#if participant.isNewToActivity}
-												<Badge variant="secondary" class="hidden sm:inline-flex">
-													New to {result.trip.activity}
-												</Badge>
-											{/if}
-										</div>
-
-										<div class="truncate text-sm text-muted-foreground">
-											{participant.user.email}
-										</div>
-									</div>
-								</div>
-							{:else if cell.column.id === 'status'}
-								<div onclick={(event) => event.stopPropagation()}>
-									<Select.Root
-										type="single"
-										value={participant.signup.status}
-										onValueChange={(value) => changeStatus(participant.id, value as Status)}>
-										<Select.Trigger
-											class="w-32.5"
-											disabled={updatingParticipant === participant.id}>
-											<Select.Value>
-												{statusLabels[participant.signup.status]}
-											</Select.Value>
-										</Select.Trigger>
-
-										<Select.Content>
-											<Select.Item value="pending">Pending</Select.Item>
-
-											<Select.Item value="accepted">Accepted</Select.Item>
-
-											<Select.Item value="attended">Attended</Select.Item>
-
-											<Select.Item value="no_show">No-show</Select.Item>
-
-											<Select.Item value="cancelled">Cancelled</Select.Item>
-
-											<Select.Item value="declined">Declined</Select.Item>
-										</Select.Content>
-									</Select.Root>
-								</div>
-							{:else}
-								<!-- The DataTable currently renders the normal
-								     column cell when no custom cell snippet is
-								     provided. -->
-							{/if}
 						{/snippet}
 					</DataTable>
 				{/if}

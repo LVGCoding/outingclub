@@ -8,6 +8,7 @@
 		filter?: 'text' | 'select';
 		filterOptions?: FilterOption[];
 		filterPlaceholder?: string;
+		multi?: boolean;
 	};
 </script>
 
@@ -47,6 +48,8 @@
 	import { Button, buttonVariants } from '../ui/button';
 	import { Input } from '../ui/input';
 	import { cn } from '#lib/utils';
+	import Switch from '../ui/switch/switch.svelte';
+	import Label from '../ui/label/label.svelte';
 
 	type DataTableFeatures = ReturnType<typeof tableFeatures>;
 
@@ -86,6 +89,8 @@
 
 	const table = createTable({
 		features,
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
 		columns,
 
 		get data() {
@@ -97,6 +102,8 @@
 		initialState: {
 			pagination: {
 				pageIndex: 0,
+				// eslint-disable-next-line svelte/no-unused-svelte-ignore
+				// svelte-ignore state_referenced_locally
 				pageSize
 			}
 		},
@@ -147,8 +154,8 @@
 						{#each headerGroup.headers as header (header.id)}
 							<Table.Head>
 								{#if !header.isPlaceholder}
-									{@const column = header.column}
-									{@const meta = getColumnMeta(column)}
+									{const column = header.column}
+									{const meta = getColumnMeta(column)}
 
 									<div class="flex items-center gap-1">
 										{#if column.getCanSort()}
@@ -231,11 +238,58 @@
 																oninput={(event) =>
 																	column.setFilterValue(event.currentTarget.value)} />
 														{:else if meta.filter === 'select'}
+															{#if meta.multi}
+																<Label>
+																	Require All <Switch
+																		onCheckedChange={(e) => {
+																			let oValue = (getFilterValue(column) ?? {
+																				value: undefined,
+																				requireAll: false
+																			}) as {
+																				value: string[] | undefined;
+																				requireAll: boolean;
+																			};
+																			column.setFilterValue({
+																				value: oValue.value,
+																				requireAll: e
+																			});
+																		}}
+																		checked={(
+																			getFilterValue(column) as
+																				| {
+																						value: string[] | undefined;
+																						requireAll: boolean;
+																				  }
+																				| undefined
+																		)?.requireAll}></Switch>
+																</Label>
+															{/if}
 															<Select.Root
 																type="multiple"
-																value={getFilterValue(column) as string[]}
+																value={!meta.multi
+																	? (getFilterValue(column) as string[])
+																	: (
+																			(getFilterValue(column) as {
+																				value: string[];
+																				requireAll: boolean;
+																			}) ?? { value: undefined, requireAll: false }
+																		)?.value || []}
 																onValueChange={(value) => {
-																	column.setFilterValue(value.length ? value : undefined);
+																	if (meta.multi) {
+																		let oValue = (getFilterValue(column) ?? {
+																			value: undefined,
+																			requireAll: false
+																		}) as {
+																			value: string[] | undefined;
+																			requireAll: boolean;
+																		};
+																		column.setFilterValue({
+																			value: value.length ? value : undefined,
+																			requireAll: oValue.requireAll
+																		});
+																	} else {
+																		column.setFilterValue(value.length ? value : undefined);
+																	}
 																}}>
 																<Select.Trigger class="w-full">
 																	<Select.Value

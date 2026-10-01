@@ -292,7 +292,7 @@ export const getTripParticipants = query(v.object({ id: v.string() }), async ({ 
 	}
 	const trip = await db.query.trips.findFirst({
 		where: eq(trips.id, id),
-		columns: { id: true, title: true, activity: true, time: true }
+		columns: { id: true, title: true, activity: true, time: true, formElements: true }
 	});
 	if (!trip) {
 		throw new Error('Trip not found');
@@ -316,7 +316,10 @@ export const getTripParticipants = query(v.object({ id: v.string() }), async ({ 
 	});
 	const userIds = participants.map((p) => p.userId);
 	if (userIds.length === 0) {
-		return { trip, participants: [] };
+		return {
+			trip: trip as Omit<typeof trip, 'formElements'> & { formElements: formElement[] },
+			participants: []
+		};
 	}
 	// Get all participation history for these users.
 	const history = await db.query.tripParticipants.findMany({
@@ -354,7 +357,10 @@ export const getTripParticipants = query(v.object({ id: v.string() }), async ({ 
 			isNewToActivity: currentActivityTrips.length === 0
 		};
 	});
-	return { trip, participants: result };
+	return {
+		trip: trip as Omit<typeof trip, 'formElements'> & { formElements: formElement[] },
+		participants: result
+	};
 });
 
 export const updateTripStatus = command(

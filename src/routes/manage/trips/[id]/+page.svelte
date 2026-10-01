@@ -69,7 +69,7 @@
 
 <div class="flex flex-col items-center justify-center" bind:this={rect}>
 	{#if trip}
-		<Card.Root class="w-[98%] lg:w-[80%]">
+		<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 			<div class="flex items-center justify-center">
 				<ToggleGroup.Root class="w-80" type="single" value="a">
 					<ToggleGroup.Item class="flex-1" value="a">Trip</ToggleGroup.Item>
@@ -349,6 +349,15 @@
 				</Card.Root>
 				<ActionWrapper
 					onclick={async () => {
+						const uniqueValues = new Set(formElements.map((obj) => obj.label));
+						if (uniqueValues.size < formElements.length) {
+							Swal2.fire(
+								'Warning',
+								"You can't have multiple form elements with the same label.",
+								'warning'
+							);
+							return;
+						}
 						let result = await updateFormElements({ id: trip.id ?? '', formElements });
 						if (result) {
 							Swal2.fire('Success', 'Form elements updated successfully', 'success');

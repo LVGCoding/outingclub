@@ -8,7 +8,7 @@
 
 <div class="flex flex-col items-center justify-center">
 	<img src="/logo.png" alt="logo" />
-	<Card.Root class="w-[98%] lg:w-[80%]">
+	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<Card.Header>
 			<Card.Title>Trips</Card.Title>
 		</Card.Header>
