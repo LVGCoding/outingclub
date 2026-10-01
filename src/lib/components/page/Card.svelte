@@ -6,23 +6,30 @@
 	import Input from '../ui/input/input.svelte';
 	import { Label } from '../ui/label';
 	import Separator from '../ui/separator/separator.svelte';
-	import { type PageContent } from './Page.svelte';
+	import { type CardT } from './Page.svelte';
 	import { GripVertical } from 'lucide-svelte';
-	import { Button } from '../ui/button';
-	import { cn, Swal2 } from '#lib/utils';
-	import { getPageStuff } from './context';
+	import { cn } from '#lib/utils';
 	import { Switch } from '../ui/switch';
 	import LexicalRenderer from '../textEditor/LexicalRenderer.svelte';
-	type Card = PageContent & { type: 'card' };
 	let {
 		card = $bindable(),
 		editMode,
-		rowIndex
-	}: { card: Card; editMode: boolean; rowIndex: number } = $props();
-	let pageStuff = getPageStuff();
+		rowIndex,
+		props
+	}: {
+		card: CardT;
+		editMode: boolean;
+		rowIndex: number;
+		props: Record<string, unknown>;
+	} = $props();
 </script>
 
 <Card.Root
+	{...props}
+	style={card.shrink
+		? 'flex: 0 0 auto; min-width: ' + card.minWidth + 'rem; max-width: 100%;'
+		: 'flex: 1 1 300px;'}
+	class={cn('relative min-w-80 bg-card/95 p-0', {})}
 	{@attach attachDraggable(() => ({
 		container: 'item row:' + rowIndex.toString(),
 		handle: '.drag-handle-item',
@@ -32,33 +39,9 @@
 			id: card.id,
 			type: 'card'
 		}
-	}))}
-	style={card.shrink ? 'flex: 0 0 auto; min-width: 0;' : 'flex: 1 1 300px;'}
-	class={cn('relative min-w-80 bg-card/95 p-0', {})}>
+	}))}>
 	{#if editMode}
 		<GripVertical class="drag-handle-item absolute top-1 left-1" />
-
-		<Button
-			onclick={async () => {
-				let res = await Swal2.fire({
-					icon: 'warning',
-					title: 'Are you sure you want to delete this card?',
-					showCloseButton: true,
-					showCancelButton: true
-				});
-				if (res.isConfirmed) {
-					if (pageStuff.content[rowIndex].columns.length === 1) {
-						pageStuff.content.splice(rowIndex, 1);
-					} else {
-						let column = pageStuff.content[rowIndex].columns.findIndex((e) => e.id === card.id);
-						pageStuff.content[rowIndex].columns.splice(column, 1);
-					}
-				}
-			}}
-			variant="destructive"
-			class="drag-handle absolute top-1 right-1">
-			Del
-		</Button>
 	{/if}
 	<div style="border-color: {card.color};" class="flex h-full w-full flex-col border-l-4 p-6">
 		{#if editMode || card.title || card.badge}
@@ -74,6 +57,13 @@
 							<Switch bind:checked={card.shrink} id="shrink" />
 							<Label for="shrink">Shrink</Label>
 						</div>
+						{#if card.shrink}
+							<input
+								title="minWidth"
+								class="rounded bg-card p-1"
+								placeholder="minWidth"
+								bind:value={card.minWidth} />
+						{/if}
 					{:else}
 						{card.title}
 					{/if}

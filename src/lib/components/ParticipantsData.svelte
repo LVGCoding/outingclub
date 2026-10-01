@@ -207,7 +207,7 @@
 	);
 </script>
 
-<Card class="w-[98%] lg:w-[80%]">
+<Card class="w-[98%] p-4 lg:w-[80%]">
 	<CardHeader>
 		<div class="flex items-center justify-between gap-4">
 			<div>

@@ -25,7 +25,7 @@ export const user = sqliteTable("user", {
   notes: text("notes").default("").notNull(),
   paidDuesEnd: text("paid_dues_end").default("2010/12").notNull(),
   lastLogin: integer("last_login", { mode: "timestamp_ms" })
-    .default("CURRENT_TIMESTAMP()")
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),
 });
 

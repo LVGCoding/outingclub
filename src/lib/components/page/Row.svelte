@@ -3,16 +3,22 @@
 	import Bio from './Bio.svelte';
 	import Card from './Card.svelte';
 	import ImageLink from './ImageLink.svelte';
-	import { type dragItem, type PageContent } from './Page.svelte';
+	import {
+		type dragItem,
+		type BioT,
+		type PdfT,
+		type CardT,
+		type ImageLinkT,
+		type RowT,
+		type CoolButtonT
+	} from './Page.svelte';
 	import Pdf from './Pdf.svelte';
-	import { cn } from '#lib/utils';
+	import { cn, Swal2 } from '#lib/utils';
 	import { GripVertical } from 'lucide-svelte';
 	import { getPageStuff } from './context';
-	type RowT = PageContent & { type: 'row' };
-	type BioT = PageContent & { type: 'bio' };
-	type PdfT = PageContent & { type: 'pdf' };
-	type CardT = PageContent & { type: 'card' };
-	type ImageLinkT = PageContent & { type: 'image' };
+	import * as ContextMenu from '#lib/components/ui/context-menu';
+	import CoolButton from './CoolButton.svelte';
+
 	let {
 		row = $bindable(),
 		editMode,
@@ -101,17 +107,120 @@
 		{@render moveCol({ i: 0 })}
 	{/if}
 	{#each row.columns as item, i (i)}
-		{#if item.type === 'row'}
-			Error Cant have row in row
-		{:else if item.type === 'bio'}
-			<Bio rowIndex={index} {editMode} bind:bio={row.columns[i] as BioT} />
-		{:else if item.type === 'card'}
-			<Card rowIndex={index} {editMode} bind:card={row.columns[i] as CardT} />
-		{:else if item.type === 'image'}
-			<ImageLink rowIndex={index} {editMode} bind:img={row.columns[i] as ImageLinkT} />
-		{:else if item.type === 'pdf'}
-			<Pdf rowIndex={index} {editMode} bind:pdf={row.columns[i] as PdfT} />
-		{/if}
+		<ContextMenu.Root>
+			<ContextMenu.Trigger disabled={!editMode}>
+				{#snippet child({ props })}
+					{#if editMode}
+						{#if item.type === 'row'}
+							Error Cant have row in row
+						{:else if item.type === 'bio'}
+							<Bio {props} rowIndex={index} {editMode} bind:bio={row.columns[i] as BioT} />
+						{:else if item.type === 'card'}
+							<Card {props} rowIndex={index} {editMode} bind:card={row.columns[i] as CardT} />
+						{:else if item.type === 'image'}
+							<ImageLink
+								{props}
+								rowIndex={index}
+								{editMode}
+								bind:img={row.columns[i] as ImageLinkT} />
+						{:else if item.type === 'pdf'}
+							<Pdf {props} rowIndex={index} {editMode} bind:pdf={row.columns[i] as PdfT} />
+						{:else if item.type === 'cool-button'}
+							<CoolButton
+								{props}
+								rowIndex={index}
+								{editMode}
+								bind:coolButton={row.columns[i] as CoolButtonT} />
+						{/if}
+					{:else}
+						{#if item.type === 'row'}
+							Error Cant have row in row
+						{:else if item.type === 'bio'}
+							<Bio {props} rowIndex={index} {editMode} bio={row.columns[i] as BioT} />
+						{:else if item.type === 'card'}
+							<Card {props} rowIndex={index} {editMode} card={row.columns[i] as CardT} />
+						{:else if item.type === 'image'}
+							<ImageLink {props} rowIndex={index} {editMode} img={row.columns[i] as ImageLinkT} />
+						{:else if item.type === 'pdf'}
+							<Pdf {props} rowIndex={index} {editMode} pdf={row.columns[i] as PdfT} />
+						{:else if item.type === 'cool-button'}
+							<CoolButton
+								{props}
+								rowIndex={index}
+								{editMode}
+								coolButton={row.columns[i] as CoolButtonT} />
+						{/if}
+					{/if}
+				{/snippet}
+			</ContextMenu.Trigger>
+			<ContextMenu.Content>
+				<ContextMenu.Item
+					onclick={() => {
+						navigator.clipboard.writeText(JSON.stringify(item));
+					}}>
+					Copy
+				</ContextMenu.Item>
+				<ContextMenu.Item
+					onclick={async () => {
+						const item = await navigator.clipboard.readText().then((text) => JSON.parse(text));
+						if (!['card', 'bio', 'image', 'pdf', 'cool-button'].includes(item.type)) return;
+						row.columns.splice(i, 0, item);
+					}}>
+					Paste Left
+				</ContextMenu.Item>
+				<ContextMenu.Item
+					onclick={async () => {
+						const item = await navigator.clipboard.readText().then((text) => JSON.parse(text));
+						if (!['card', 'bio', 'image', 'pdf', 'cool-button'].includes(item.type)) return;
+						row.columns.splice(i + 1, 0, item);
+					}}>
+					Paste Right
+				</ContextMenu.Item>
+				<ContextMenu.Item
+					onclick={async () => {
+						const item = await navigator.clipboard.readText().then((text) => JSON.parse(text));
+						if (!['card', 'bio', 'image', 'pdf', 'cool-button'].includes(item.type)) return;
+						page.splice(index, 0, {
+							id: Math.random(),
+							type: 'row',
+							columns: [item]
+						});
+					}}>
+					Paste Above
+				</ContextMenu.Item>
+				<ContextMenu.Item
+					onclick={async () => {
+						const item = await navigator.clipboard.readText().then((text) => JSON.parse(text));
+						if (!['card', 'bio', 'image', 'pdf', 'cool-button'].includes(item.type)) return;
+						page.splice(index + 1, 0, {
+							id: Math.random(),
+							type: 'row',
+							columns: [item]
+						});
+					}}>
+					Paste Below
+				</ContextMenu.Item>
+				<ContextMenu.Item
+					onclick={async () => {
+						let res = await Swal2.fire({
+							icon: 'warning',
+							title: 'Are you sure you want to delete this card?',
+							showCloseButton: true,
+							showCancelButton: true
+						});
+						if (res.isConfirmed) {
+							if (pageStuff.content[index].columns.length === 1) {
+								pageStuff.content.splice(index, 1);
+							} else {
+								let column = row.columns.findIndex((e) => e.id === item.id);
+								row.columns.splice(column, 1);
+							}
+						}
+					}}>
+					Delete
+				</ContextMenu.Item>
+			</ContextMenu.Content>
+		</ContextMenu.Root>
 		{#if editMode}
 			{@render moveCol({ i: i + 1 })}
 		{/if}

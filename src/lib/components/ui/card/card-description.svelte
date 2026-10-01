@@ -7,14 +7,13 @@
 		class: className,
 		children,
 		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLParagraphElement>> = $props();
+	}: WithElementRef<HTMLAttributes<HTMLSpanElement>> = $props();
 </script>
 
 <span
 	bind:this={ref}
 	data-slot="card-description"
 	class={cn('text-sm text-muted-foreground', className)}
-	{...restProps}
->
+	{...restProps}>
 	{@render children?.()}
 </span>

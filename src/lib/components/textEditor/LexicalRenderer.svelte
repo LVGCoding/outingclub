@@ -27,6 +27,9 @@
 	.editorStyle :global(.toolbar) {
 		scrollbar-width: thin;
 	}
+	.editorStyle :global(li) {
+		margin-left: 1.25em;
+	}
 
 	.editorStyle :global(a) {
 		color: royalblue;
@@ -56,14 +59,9 @@
 		background-color: var(--color-white) !important;
 		color: var(--color-card-foreground) !important;
 	}
-	.notEditable :global(.SL_Theme__layoutItem) {
-		border: none !important;
-	}
-	.notEditable :global(.editor-container) {
-		border: none !important;
-	}
 	.editorStyle {
 		position: static;
 		width: 100%;
+		margin: 0 !important;
 	}
 </style>

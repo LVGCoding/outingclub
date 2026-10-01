@@ -1,7 +1,12 @@
 <script lang="ts">
 	import * as Card from '#lib/components/ui/card/';
 	import type { PageProps } from './$types';
-	import { createExternalPage, createInternalPage, deletePage } from '../../query/page.remote';
+	import {
+		createExternalPage,
+		createInternalPage,
+		deletePage,
+		duplicatePage
+	} from '../../query/page.remote';
 	import Button, { buttonVariants } from '#lib/components/ui/button/button.svelte';
 	import { Swal2 } from '#lib/utils';
 	import * as Dialog from '#lib/components/ui/dialog/';
@@ -76,6 +81,16 @@
 								{page.path}
 							</Card.Description>
 							<Card.Action>
+								{#if !page.link}
+									<Button
+										onclick={async () => {
+											await duplicatePage({ id: page.id });
+											await invalidate('app:paths');
+										}}
+										variant="link">
+										Duplicate Page
+									</Button>
+								{/if}
 								{#if !page.link}
 									<Button href={`/manage/pages/${page.id}`} variant="link">Edit Page</Button>
 								{/if}

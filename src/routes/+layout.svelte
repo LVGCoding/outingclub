@@ -6,9 +6,8 @@
 	import { enhance } from '$app/forms';
 	import { cn } from '#lib/utils';
 	import { page } from '$app/state';
-	import { MoonIcon, SunIcon } from 'lucide-svelte';
+	import { ChevronDown, ChevronRight, MoonIcon, SunIcon } from 'lucide-svelte';
 	import { bgImages } from '#lib/generated/images';
-	import { MediaQuery } from 'svelte/reactivity';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -19,12 +18,13 @@
 		if (data.canCreatePages) items.push({ label: 'Manage Pages', href: '/manage/pages' });
 		return items;
 	});
-
-	const isDesktop = new MediaQuery('(min-width: 64rem)');
+	let width = $state(1000);
 </script>
 
+<svelte:body bind:clientWidth={width} />
+
 {#snippet link({ label, href }: { label: string; href: string | undefined })}
-	<li>
+	<li class="grow">
 		<a
 			class={cn(
 				'block border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
@@ -46,20 +46,21 @@
 	href: string | undefined;
 	items: { label: string; href: string }[];
 })}
-	{#if isDesktop.current}
+	{@const id = `dropdown-${Math.random().toString(36).slice(2)}`}
+	{#if width > 800}
 		<div class="group/dd relative">
 			<a
 				type="button"
 				{href}
 				class={cn(
-					'block border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
+					'flex items-center border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
 					{
 						'border-accent': page.url.pathname === href
 					}
 				)}
 				aria-haspopup="true">
 				{label}
-				<i class="bi bi-chevron-down text-xs transition-transform group-hover/dd:rotate-180"></i>
+				<ChevronDown size={16} />
 			</a>
 			<div
 				class="invisible absolute top-full left-0 z-20 pt-3 opacity-0 transition-opacity duration-200 group-focus-within/dd:visible group-focus-within/dd:opacity-100 group-hover/dd:visible group-hover/dd:opacity-100">
@@ -78,12 +79,16 @@
 			</div>
 		</div>
 	{:else}
-		{#if href}
+		<label for={id} class="dropdown-menu-toggle flex items-center">
 			{@render link({ href, label })}
-		{/if}
-		{#each items as item, i (i)}
-			{@render link({ href: item.href, label: item.label })}
-		{/each}
+			<ChevronRight />
+		</label>
+		<input {id} type="checkbox" class="dropdown-menu-toggle hidden" />
+		<div class="dropdown-menu hidden pl-2 text-sm">
+			{#each items as item, i (i)}
+				{@render link({ href: item.href, label: item.label })}
+			{/each}
+		</div>
 	{/if}
 {/snippet}
 <ModeWatcher defaultMode="dark" />
@@ -121,7 +126,7 @@
 						href: undefined,
 						items: data.paths['activity'].map((path) => ({
 							label: path.title,
-							href: `/activities/${path.path}`
+							href: path.link ? path.path : `/activities/${path.path}`
 						}))
 					})}
 				{/if}
@@ -131,7 +136,7 @@
 						href: undefined,
 						items: data.paths['club'].map((path) => ({
 							label: path.title,
-							href: `/club/${path.path}`
+							href: path.link ? path.path : `/club/${path.path}`
 						}))
 					})}
 				{/if}
@@ -190,5 +195,13 @@
 <style>
 	#menu-toggle:checked + #menu {
 		display: block;
+	}
+	.dropdown-menu-toggle:checked + .dropdown-menu {
+		display: block;
+	}
+	label:has(+ .dropdown-menu-toggle:checked) {
+		:global(svg) {
+			transform: rotate(90deg);
+		}
 	}
 </style>

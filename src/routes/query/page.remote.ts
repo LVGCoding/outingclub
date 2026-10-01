@@ -51,6 +51,28 @@ export const getPageById = query(
 		return { ...pathFound, content: pathFound?.content as (PageContent & { type: 'row' })[] };
 	}
 );
+
+export const duplicatePage = command(
+	v.object({
+		id: v.string()
+	}),
+	async ({ id }) => {
+		const page = await getPageById({ id });
+		if (!page) return;
+		const new_page = await db
+			.insert(pages)
+			.values({
+				title: page.title ?? '',
+				path: page.path + '-copy',
+				link: false,
+				pageCategory: page.pageCategory ?? 'activity',
+				content: page.content
+			})
+			.returning();
+		return new_page;
+	}
+);
+
 export const getPaths = query(async () => {
 	const paths = await db.query.pages.findMany({
 		columns: {

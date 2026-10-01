@@ -68,7 +68,7 @@ export const auth = betterAuth({
 			yearJoined: { type: 'number', optional: false, defaultValue: 2000 },
 			notes: { type: 'string', optional: true, defaultValue: '' },
 			paidDuesEnd: { type: 'string', defaultValue: '2010/12' },
-			lastLogin: { type: 'date', defaultValue: 'CURRENT_TIMESTAMP()' }
+			lastLogin: { type: 'date', defaultValue: () => new Date() }
 		}
 	}
 });

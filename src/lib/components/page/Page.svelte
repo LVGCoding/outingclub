@@ -12,7 +12,8 @@
 		{ value: 'card', label: 'Card' },
 		{ value: 'image', label: 'Image' },
 		{ value: 'pdf', label: 'PDF' },
-		{ value: 'bio', label: 'Bio' }
+		{ value: 'bio', label: 'Bio' },
+		{ value: 'cool-button', label: 'Cool Button' }
 	];
 
 	export type dragItem = { id: number; type: string };
@@ -33,6 +34,7 @@
 				badge: string;
 				content: string;
 				shrink: boolean;
+				minWidth: number;
 		  }
 		| {
 				type: 'row';
@@ -48,9 +50,20 @@
 				url: string;
 				href: string;
 		  }
+		| {
+				type: 'cool-button';
+				href: string;
+				img: string;
+				text: string;
+		  }
 	);
 
-	type RowT = PageContent & { type: 'row' };
+	export type RowT = PageContent & { type: 'row' };
+	export type BioT = PageContent & { type: 'bio' };
+	export type ImageLinkT = PageContent & { type: 'image' };
+	export type PdfT = PageContent & { type: 'pdf' };
+	export type CardT = PageContent & { type: 'card' };
+	export type CoolButtonT = PageContent & { type: 'cool-button' };
 </script>
 
 <script lang="ts">
@@ -85,6 +98,9 @@
 		creatingItem: null,
 		content: content
 	});
+
+	let lastElement = $state('card');
+
 	setPageStuff(pageStuff);
 	function handleDrop(state: DragDropState<dragItem>) {
 		const { draggedItem, sourceContainer, targetContainer } = state;
@@ -129,16 +145,88 @@
 		// 	content.splice(adjusted, 0, item);
 		// }
 	}
+
+	function setCurrentElement(type: string) {
+		pageStuff.adding = true;
+		lastElement = type;
+		if (type === 'card') {
+			pageStuff.creatingItem = {
+				type: 'card',
+				id: Math.random(),
+				title: '',
+				color: '#0eb100',
+				badge: '',
+				content: '',
+				shrink: false,
+				minWidth: 0
+			};
+		} else if (type === 'image') {
+			pageStuff.creatingItem = {
+				type: 'image',
+				id: Math.random(),
+				url: '',
+				href: ''
+			};
+		} else if (type === 'cool-button') {
+			pageStuff.creatingItem = {
+				type: 'cool-button',
+				id: Math.random(),
+				img: '',
+				text: '',
+				href: ''
+			};
+		} else if (type === 'pdf') {
+			pageStuff.creatingItem = {
+				type: 'pdf',
+				id: Math.random(),
+				url: '',
+				title: ''
+			};
+		} else if (type === 'bio') {
+			pageStuff.creatingItem = {
+				type: 'bio',
+				id: Math.random(),
+				title: '',
+				image: '',
+				name: '',
+				email: '',
+				bio: ''
+			};
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>{title}</title>
 </svelte:head>
 <svelte:document
-	onkeydown={(e) => {
+	onkeydown={async (e) => {
 		if (e.key === 'Escape') {
 			pageStuff.adding = false;
 			pageStuff.creatingItem = null;
+		}
+		if (e.ctrlKey && e.key === 'q') {
+			e.preventDefault();
+			setCurrentElement(lastElement);
+		}
+		if (e.ctrlKey && e.shiftKey && e.key === 'Q') {
+			e.preventDefault();
+			let res = await Swal2.fire({
+				title: 'Element Type',
+				input: 'select',
+				confirmButtonText: 'Add Element',
+				showCancelButton: true,
+				showCloseButton: true,
+				inputOptions: {
+					...optionsElements?.reduce(
+						(acc, option) => ({ ...acc, [option.value]: option.label }),
+						{}
+					)
+				}
+			});
+			if (res.isConfirmed) {
+				setCurrentElement(res.value);
+			}
 		}
 	}} />
 
@@ -168,56 +256,25 @@
 			</Select.Root>
 		</label>
 		<Button
-			onclick={async () => {
-				let res = await Swal2.fire({
-					title: 'Element Type',
-					input: 'select',
-					confirmButtonText: 'Add Element',
-					showCancelButton: true,
-					showCloseButton: true,
-					inputOptions: {
-						...optionsElements?.reduce(
-							(acc, option) => ({ ...acc, [option.value]: option.label }),
-							{}
-						)
-					}
-				});
-				if (res.isConfirmed) {
-					pageStuff.adding = true;
-					if (res.value === 'card') {
-						pageStuff.creatingItem = {
-							type: 'card',
-							id: Math.random(),
-							title: '',
-							color: '#0eb100',
-							badge: '',
-							content: '',
-							shrink: false
-						};
-					} else if (res.value === 'image') {
-						pageStuff.creatingItem = {
-							type: 'image',
-							id: Math.random(),
-							url: '',
-							href: ''
-						};
-					} else if (res.value === 'pdf') {
-						pageStuff.creatingItem = {
-							type: 'pdf',
-							id: Math.random(),
-							url: '',
-							title: ''
-						};
-					} else if (res.value === 'bio') {
-						pageStuff.creatingItem = {
-							type: 'bio',
-							id: Math.random(),
-							title: '',
-							image: '',
-							name: '',
-							email: '',
-							bio: ''
-						};
+			onclick={async (e) => {
+				if (e.shiftKey) {
+					setCurrentElement(lastElement);
+				} else {
+					let res = await Swal2.fire({
+						title: 'Element Type',
+						input: 'select',
+						confirmButtonText: 'Add Element',
+						showCancelButton: true,
+						showCloseButton: true,
+						inputOptions: {
+							...optionsElements?.reduce(
+								(acc, option) => ({ ...acc, [option.value]: option.label }),
+								{}
+							)
+						}
+					});
+					if (res.isConfirmed) {
+						setCurrentElement(res.value);
 					}
 				}
 			}}>
@@ -274,7 +331,11 @@
 	{@render moveRow({ i: 0 })}
 	{#each content as item, i (i)}
 		{#if item.type === 'row'}
-			<Row index={i} page={content} {editMode} bind:row={content[i]} />
+			{#if editMode}
+				<Row index={i} page={content} {editMode} bind:row={content[i]} />
+			{:else}
+				<Row index={i} editMode={false} page={content} row={content[i]} />
+			{/if}
 		{:else}
 			ERROR: unknown type {item.type}
 		{/if}

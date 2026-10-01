@@ -97,10 +97,11 @@
 			if (!content) {
 				editor.setEditorState(editor.parseEditorState(defaultText));
 			} else {
-				console.log(content);
 				editor.setEditorState(editor.parseEditorState(content));
 			}
 		},
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
 		editable: editable
 	};
 
@@ -164,10 +165,11 @@
 	<Composer bind:this={composer} {initialConfig}>
 		<div
 			class={cn('ul editorStyle editor-shell svelte-lexical m-0! rounded-4xl', {
-				notEditable: !editable
+				notEditable: !editable,
+				editable: editable
 			})}>
 			{#if browser}
-				<FloatingLinkEditorPlugin />
+				<FloatingLinkEditorPlugin anchorElem={editorContainer} />
 			{/if}
 			{#if editable}
 				<div class="relative h-9">
@@ -244,6 +246,7 @@
 		padding-inline-start: 0;
 		unicode-bidi: isolate;
 	}
+
 	.editorStyle :global(ol) {
 		display: block;
 		list-style-type: decimal;
@@ -252,42 +255,55 @@
 		padding-inline-start: 0;
 		unicode-bidi: isolate;
 	}
+
+	.editorStyle :global(li) {
+		margin-left: 1em;
+	}
+
 	.editorStyle :global(.toolbar) {
 		scrollbar-width: thin;
+	}
+
+	.editable :global(a) {
+		pointer-events: none;
 	}
 
 	.editor-shell :global(td) {
 		overflow: hidden;
 	}
+
 	.editor-shell :global(input) {
 		border-radius: var(--radius-md);
 		background-color: var(--color-card);
 	}
+
 	.editor-shell :global(.dialog-dropdown) {
 		border-radius: var(--radius-md);
 		background-color: var(--color-card) !important;
 	}
+
 	.editor-shell :global(.Button__root) {
 		border-radius: var(--radius-md);
 		background-color: var(--color-primary) !important;
 		color: var(--color-primary-foreground) !important;
 	}
+
 	.editorStyle :global(.toolbar) {
 		scrollbar-width: thin;
 		border-color: var(--border);
 	}
-	.editorStyle :global(.table-cell-action-button i) {
-		background-color: var(--color-white) !important;
-		color: var(--color-card-foreground) !important;
-	}
+
 	.notEditable :global(.SL_Theme__layoutItem) {
 		border: none !important;
 	}
+
 	.notEditable :global(.editor-container) {
 		border: none !important;
 	}
+
 	.editorStyle {
 		position: static;
 		width: 100%;
+		max-width: unset;
 	}
 </style>

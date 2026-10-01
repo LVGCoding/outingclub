@@ -421,7 +421,7 @@ export const updateUserPassword = command(
 
 export const getUsers = query(async () => {
 	if (!hasPermission({ user: ['view'] })) throw new Error('Permission Denied');
-	return (
+	const users = (
 		await db.query.user.findMany({
 			columns: {
 				createdAt: true,
@@ -436,6 +436,8 @@ export const getUsers = query(async () => {
 			}
 		})
 	).map((el) => ({ ...el, paidDues: inUserPayperiod(el.paidDuesEnd) }));
+
+	return users;
 });
 
 export const updateUser = command(

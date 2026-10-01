@@ -1,28 +1,6 @@
 <script lang="ts">
-	import {
-		createTable,
-		FlexRender,
-		tableFeatures,
-		rowSortingFeature,
-		columnFilteringFeature,
-		globalFilteringFeature,
-		rowPaginationFeature,
-		createSortedRowModel,
-		createFilteredRowModel,
-		createPaginatedRowModel,
-		type ColumnDef,
-		type FilterFn
-	} from '@tanstack/svelte-table';
-
-	import { Button, buttonVariants } from '#lib/components/ui/button';
-	import { Input } from '#lib/components/ui/input';
-	import { Label } from '#lib/components/ui/label';
-	import { Textarea } from '#lib/components/ui/textarea';
-	import { Badge } from '#lib/components/ui/badge';
-	import * as Card from '#lib/components/ui/card';
-	import * as Dialog from '#lib/components/ui/dialog';
-	import * as Select from '#lib/components/ui/select';
-	import { toast } from 'svelte-sonner';
+	import { filterFn_includesString, renderSnippet } from '@tanstack/svelte-table';
+	import type { ColumnDef, Row, TableFeatures } from '@tanstack/svelte-table';
 
 	import {
 		deleteUser,
@@ -33,18 +11,24 @@
 		updateUserPaid,
 		updateUserPassword
 	} from '../../query/trips.remote';
-
+	import DataTable from '#lib/components/dataTable/DataTable.svelte';
+	import * as Card from '#lib/components/ui/card/';
 	import type { PageProps } from './$types';
-	import { Swal2 } from '#lib/utils';
-	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/';
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
-	import { ArrowDown01, ArrowDownUp, ArrowUp01 } from 'lucide-svelte';
-
-	let pageData: PageProps = $props();
+	import { Swal2 } from '#lib/utils';
+	import { Button, buttonVariants } from '#lib/components/ui/button/index';
+	import Badge from '#lib/components/ui/badge/badge.svelte';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/';
+	import * as Dialog from '#lib/components/ui/dialog/';
+	import { Label } from '#lib/components/ui/label/';
+	import { Input } from '#lib/components/ui/input/';
+	import * as Select from '#lib/components/ui/select/';
+	import { Textarea } from '#lib/components/ui/textarea/';
+	import { toast } from 'svelte-sonner';
 
 	const data = getUsers();
-
 	type User = NonNullable<typeof data.current>[number];
+	let pageData: PageProps = $props();
 
 	let editingUser = $state<User | null>(null);
 	let saving = $state(false);
@@ -59,21 +43,6 @@
 
 	let currentSchoolYear: number =
 		new Date().getMonth() >= 6 ? new Date().getFullYear() : new Date().getFullYear() - 1;
-
-	function className(year: number) {
-		if (year < 0) {
-			return 'Grad Student';
-		}
-
-		const difference = currentSchoolYear - year;
-
-		if (difference === 0) return 'Freshman';
-		if (difference === 1) return 'Sophomore';
-		if (difference === 2) return 'Junior';
-		if (difference === 3) return 'Senior';
-
-		return 'Senior+';
-	}
 
 	function semestersPaid(user: User) {
 		const split = user.paidDuesEnd.split('/');
@@ -113,109 +82,131 @@
 		return [];
 	}
 
-	function isPaid(user: User) {
-		return semestersPaid(user).length > 0;
-	}
-
-	function roleValue(user: User) {
-		return user.role ?? 'viewer';
-	}
-
-	function roleLabel(role: User['role']) {
-		const value = role ?? 'viewer';
-
-		return value.charAt(0).toUpperCase() + value.substring(1);
-	}
-
-	const roleFilter: FilterFn<typeof features, User> = (row, columnId, value) => {
-		if (!value) return true;
-
-		return row.getValue<string>(columnId) === value;
-	};
-
-	const classFilter: FilterFn<typeof features, User> = (row, columnId, value) => {
-		if (!value) return true;
-
-		return row.getValue<string>(columnId) === value;
-	};
-
-	const paidFilter: FilterFn<typeof features, User> = (row, columnId, value) => {
-		if (!value) return true;
-
-		const paid = isPaid(row.original);
-
-		if (value === 'paid') {
-			return paid;
+	function className(year: number) {
+		if (year < 0) {
+			return 'Grad Student';
 		}
 
-		if (value === 'unpaid') {
-			return !paid;
-		}
+		const difference = currentSchoolYear - year;
 
-		return true;
-	};
+		if (difference === 0) return 'Freshman';
+		if (difference === 1) return 'Sophomore';
+		if (difference === 2) return 'Junior';
+		if (difference === 3) return 'Senior';
 
-	const features = tableFeatures({
-		rowSortingFeature,
-		columnFilteringFeature,
-		globalFilteringFeature,
-		rowPaginationFeature,
-
-		sortedRowModel: createSortedRowModel(),
-		filteredRowModel: createFilteredRowModel(),
-		paginatedRowModel: createPaginatedRowModel()
-	});
-
-	const columns: ColumnDef<typeof features, User>[] = [
+		return 'Senior+';
+	}
+	const columns = [
 		{
+			header: 'Name',
 			accessorKey: 'name',
-			header: 'Name'
-		},
-
-		{
-			accessorKey: 'email',
-			header: 'Email'
-		},
-
-		{
-			id: 'class',
-			accessorFn: (user) => className(user.yearJoined),
-			header: 'Class',
-
-			filterFn: classFilter,
-
-			sortFn: (rowA, rowB) => {
-				return rowA.original.yearJoined - rowB.original.yearJoined;
+			filterFn: filterFn_includesString,
+			meta: {
+				filter: 'text',
+				filterPlaceholder: 'Search names...'
 			}
 		},
 
 		{
-			id: 'role',
-			accessorFn: (user) => roleValue(user),
+			header: 'Email',
+			accessorKey: 'email',
+			filterFn: filterFn_includesString,
+			meta: {
+				filter: 'text',
+				filterPlaceholder: 'Search emails...'
+			}
+		},
+
+		{
+			id: 'class',
+			header: 'Class',
+			accessorKey: 'yearJoined',
+			cell: ({ row }) => className(row.original.yearJoined),
+
+			filterFn: (row, columnId, value) => {
+				if (!value) return true;
+				console.log(value, row.getValue<number>(columnId));
+				return value.includes(row.getValue<number>(columnId));
+			},
+
+			meta: {
+				filter: 'select',
+				filterPlaceholder: 'Any class',
+				filterOptions: [
+					{ label: 'Freshman', value: 'Freshman' },
+					{ label: 'Sophomore', value: 'Sophomore' },
+					{ label: 'Junior', value: 'Junior' },
+					{ label: 'Senior', value: 'Senior' },
+					{ label: 'Senior+', value: 'Senior+' },
+					{ label: 'Grad Student', value: 'Grad Student' }
+				]
+			}
+		},
+
+		{
 			header: 'Role',
+			accessorKey: 'role',
 
-			filterFn: roleFilter
+			filterFn: (row, columnId, value) => {
+				if (!value) return true;
+				return value.includes(row.getValue<string>(columnId));
+			},
+			cell: ({ row }) => {
+				return renderSnippet(Role, { role: row.original.role ?? '' });
+			},
+			meta: {
+				filter: 'select',
+				filterPlaceholder: 'Any role',
+				filterOptions: [
+					{ label: 'Member', value: 'member' },
+					{ label: 'Admin', value: 'admin' },
+					{ label: 'Leader', value: 'leader' },
+					{ label: 'Viewer', value: 'viewer' }
+				]
+			}
 		},
 
 		{
+			header: 'Phone',
 			accessorKey: 'phoneNumber',
-			header: 'Phone'
+			filterFn: filterFn_includesString,
+			meta: {
+				filter: 'text',
+				filterPlaceholder: 'Search phone numbers...'
+			}
 		},
 
 		{
+			header: 'Notes',
 			accessorKey: 'notes',
-			header: 'Notes'
+			filterFn: filterFn_includesString,
+			meta: {
+				filter: 'text',
+				filterPlaceholder: 'Search notes...'
+			}
 		},
 
 		{
 			id: 'paid',
-			accessorFn: (user) => isPaid(user),
 			header: 'Paid',
+			accessorKey: 'paidDues',
+			cell: ({ row }) => {
+				return renderSnippet(Paid, row);
+			},
 
-			filterFn: paidFilter,
+			filterFn: (row, columnId, value) => {
+				if (!value) return true;
 
-			sortFn: (rowA, rowB) => {
-				return Number(isPaid(rowA.original)) - Number(isPaid(rowB.original));
+				return value.includes(row.original.paidDues);
+			},
+
+			meta: {
+				filter: 'select',
+				filterPlaceholder: 'Any payment status',
+				filterOptions: [
+					{ label: 'Paid', value: true },
+					{ label: 'Unpaid', value: false }
+				]
 			}
 		},
 
@@ -224,51 +215,16 @@
 			header: '',
 			enableSorting: false,
 			enableColumnFilter: false,
-			enableGlobalFilter: false
-		}
-	];
 
-	const table = createTable({
-		features,
-		columns,
-
-		get data() {
-			return data.current ?? [];
-		},
-		initialState: {
-			pagination: {
-				pageIndex: 0,
-				pageSize: 25
+			cell: ({ row }) => {
+				// Keep your existing edit/delete/payment menu here.
+				// I would move that menu into UserActions.svelte as well.
+				return renderSnippet(Actions, row);
 			}
 		}
-	});
+	] satisfies ColumnDef<TableFeatures, User>[];
 
-	const pagination = $derived(table.atoms.pagination.get());
-
-	const globalFilter = $derived(table.atoms.globalFilter?.get() ?? '');
-
-	const columnFilters = $derived(table.atoms.columnFilters.get());
-
-	const roleFilterValue = $derived(
-		String(columnFilters.find((filter) => filter.id === 'role')?.value ?? '')
-	);
-
-	const classFilterValue = $derived(
-		String(columnFilters.find((filter) => filter.id === 'class')?.value ?? '')
-	);
-
-	const paidFilterValue = $derived(
-		String(columnFilters.find((filter) => filter.id === 'paid')?.value ?? '')
-	);
-
-	const rows = $derived(table.getRowModel().rows);
-
-	const filteredRowCount = $derived(table.getFilteredRowModel().rows.length);
-
-	function clearFilters() {
-		table.setGlobalFilter('');
-		table.resetColumnFilters();
-	}
+	const userData = $derived(data.current ?? []);
 
 	function openEdit(user: User) {
 		editingUser = user;
@@ -333,13 +289,159 @@
 	}
 </script>
 
+{#snippet Role({ role }: { role: string })}
+	{#if role === 'admin'}
+		<Badge variant="destructive">Admin</Badge>
+	{:else if role === 'leader'}
+		<Badge>Leader</Badge>
+	{:else if role === 'member'}
+		<Badge variant="secondary">Member</Badge>
+	{:else}
+		<Badge variant="outline">Viewer</Badge>
+	{/if}
+{/snippet}
+
+{#snippet Paid(row: Row<TableFeatures, User>)}
+	{@const sems = semestersPaid(row.original)}
+
+	<div class="flex flex-col gap-1">
+		{#if sems.length === 0}
+			<Badge>Not Paid</Badge>
+		{:else}
+			{#each sems as sem, i (i)}
+				<Badge>
+					{sem}
+				</Badge>
+			{/each}
+		{/if}
+	</div>
+{/snippet}
+
+{#snippet Actions(row: Row<TableFeatures, User>)}
+	{#if pageData.data.updateNotes}
+		<Button variant="outline" size="sm" onclick={() => openEdit(row.original)}>Notes</Button>
+	{/if}
+
+	{#if pageData.data.editUser}
+		<Button variant="outline" size="sm" onclick={() => openEdit(row.original)}>Edit</Button>
+	{/if}
+
+	{#if pageData.data.deleteUser}
+		<DropdownMenu.Root>
+			<DropdownMenu.Trigger
+				class={buttonVariants({
+					variant: 'outline',
+					size: 'sm'
+				})}>
+				...
+			</DropdownMenu.Trigger>
+
+			<DropdownMenu.Content>
+				<DropdownMenu.Group>
+					<DropdownMenu.Label>User Actions</DropdownMenu.Label>
+
+					<DropdownMenu.Separator />
+
+					<ActionWrapper
+						onclick={async () => {
+							await updateUserPaid({
+								id: row.original.id,
+								paid: true,
+								semesters: 2
+							});
+
+							data.refresh();
+						}}>
+						{#snippet children({ props, spinnerIcon })}
+							<DropdownMenu.Item {...props} title="User paid for 2 semesters">
+								{@render spinnerIcon()}
+								Paid 2 semesters
+							</DropdownMenu.Item>
+						{/snippet}
+					</ActionWrapper>
+
+					<ActionWrapper
+						onclick={async () => {
+							await updateUserPaid({
+								id: row.original.id,
+								paid: true,
+								semesters: 1
+							});
+
+							data.refresh();
+						}}>
+						{#snippet children({ props, spinnerIcon })}
+							<DropdownMenu.Item {...props} title="User paid for 1 semester">
+								{@render spinnerIcon()}
+								Paid 1 semester
+							</DropdownMenu.Item>
+						{/snippet}
+					</ActionWrapper>
+
+					<ActionWrapper
+						onclick={async () => {
+							await updateUserPaid({
+								id: row.original.id,
+								paid: false,
+								semesters: 1
+							});
+
+							data.refresh();
+						}}>
+						{#snippet children({ props, spinnerIcon })}
+							<DropdownMenu.Item {...props} title="Set this user to unpaid">
+								{@render spinnerIcon()}
+								Mark user unpaid
+							</DropdownMenu.Item>
+						{/snippet}
+					</ActionWrapper>
+
+					<ActionWrapper
+						onclick={async () => {
+							const confirm = await Swal2.fire({
+								title: 'Delete User',
+								text: 'Are you sure you want to delete this user?',
+								icon: 'warning',
+								showCancelButton: true,
+								confirmButtonText: 'Delete',
+								cancelButtonText: 'Cancel'
+							});
+
+							if (!confirm.isConfirmed) {
+								return;
+							}
+
+							await deleteUser({
+								userId: row.original.id
+							});
+
+							data.refresh();
+						}}>
+						{#snippet children({ props, spinnerIcon })}
+							<DropdownMenu.Item {...props} title="Delete this user">
+								{@render spinnerIcon()}
+								Delete
+							</DropdownMenu.Item>
+						{/snippet}
+					</ActionWrapper>
+				</DropdownMenu.Group>
+			</DropdownMenu.Content>
+		</DropdownMenu.Root>
+	{/if}
+{/snippet}
+
 <div class="flex flex-col items-center justify-center">
-	<Card.Root class="w-[98%] lg:w-[80%]">
+	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<Card.Header>
 			<Card.Title>User Management</Card.Title>
 
 			<Card.Description>
 				Manage club members and their information.
+				<br />
+				You can shift click the sort icon to sort by multiple columns.
+			</Card.Description>
+
+			<Card.Action>
 				{#if pageData.data.deleteUser}
 					<ActionWrapper
 						onclick={async () => {
@@ -355,386 +457,17 @@
 							}
 						}}>
 						{#snippet children({ props, spinnerIcon })}
-							<Button {...props}>{@render spinnerIcon()} Remove Old users</Button>
+							<Button variant="link" size="sm" {...props}>
+								{@render spinnerIcon()} Remove Old users
+							</Button>
 						{/snippet}
 					</ActionWrapper>
 				{/if}
-			</Card.Description>
-
-			<Card.Action>
-				<div class="flex flex-wrap gap-2">
-					<Input
-						value={globalFilter}
-						oninput={(event) => {
-							table.setGlobalFilter(event.currentTarget.value);
-						}}
-						placeholder="Search users..."
-						class="w-64" />
-
-					<Select.Root
-						type="single"
-						value={roleFilterValue}
-						onValueChange={(value) => {
-							table.getColumn('role')?.setFilterValue(value ?? '');
-						}}>
-						<Select.Trigger class="w-32">
-							{roleFilterValue ? roleLabel(roleFilterValue as User['role']) : 'All Roles'}
-						</Select.Trigger>
-
-						<Select.Content>
-							<Select.Item value="">All Roles</Select.Item>
-							<Select.Item value="member">Member</Select.Item>
-							<Select.Item value="leader">Leader</Select.Item>
-							<Select.Item value="admin">Admin</Select.Item>
-							<Select.Item value="viewer">Viewer</Select.Item>
-						</Select.Content>
-					</Select.Root>
-
-					<Select.Root
-						type="single"
-						value={classFilterValue}
-						onValueChange={(value) => {
-							table.getColumn('class')?.setFilterValue(value ?? '');
-						}}>
-						<Select.Trigger class="w-36">
-							{classFilterValue || 'All Classes'}
-						</Select.Trigger>
-
-						<Select.Content>
-							<Select.Item value="">All Classes</Select.Item>
-
-							<Select.Item value="Freshman">Freshman</Select.Item>
-
-							<Select.Item value="Sophomore">Sophomore</Select.Item>
-
-							<Select.Item value="Junior">Junior</Select.Item>
-
-							<Select.Item value="Senior">Senior</Select.Item>
-
-							<Select.Item value="Senior+">Senior+</Select.Item>
-
-							<Select.Item value="Grad Student">Grad Student</Select.Item>
-						</Select.Content>
-					</Select.Root>
-
-					<Select.Root
-						type="single"
-						value={paidFilterValue}
-						onValueChange={(value) => {
-							table.getColumn('paid')?.setFilterValue(value ?? '');
-						}}>
-						<Select.Trigger class="w-32">
-							{paidFilterValue === 'paid'
-								? 'Paid'
-								: paidFilterValue === 'unpaid'
-									? 'Unpaid'
-									: 'All Payment'}
-						</Select.Trigger>
-
-						<Select.Content>
-							<Select.Item value="">All Payment</Select.Item>
-
-							<Select.Item value="paid">Paid</Select.Item>
-
-							<Select.Item value="unpaid">Unpaid</Select.Item>
-						</Select.Content>
-					</Select.Root>
-
-					{#if globalFilter || roleFilterValue || classFilterValue || paidFilterValue}
-						<Button variant="ghost" size="sm" onclick={clearFilters}>Clear</Button>
-					{/if}
-				</div>
 			</Card.Action>
 		</Card.Header>
 
 		<Card.Content class="p-0">
-			{#await data}
-				<div class="p-8 text-center text-muted-foreground">Loading users...</div>
-			{:then}
-				{#if rows.length === 0}
-					<Card.Root class="w-full border border-dashed! ring-0">
-						<Card.Content>
-							<p>No users found.</p>
-						</Card.Content>
-					</Card.Root>
-				{:else}
-					<div class="overflow-x-auto">
-						<table class="w-full text-sm">
-							<thead class="border-y bg-muted/50">
-								{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-									<tr>
-										{#each headerGroup.headers as header (header.id)}
-											<th class="px-4 py-3 text-left font-medium">
-												{#if !header.isPlaceholder}
-													{#if header.column.getCanSort()}
-														<button
-															class="flex items-center gap-1 hover:text-foreground"
-															onclick={header.column.getToggleSortingHandler()}>
-															<FlexRender {header} />
-
-															{#if header.column.getIsSorted() === 'asc'}
-																<span><ArrowUp01 size={16} /></span>
-															{:else if header.column.getIsSorted() === 'desc'}
-																<span><ArrowDown01 size={16} /></span>
-															{:else}
-																<span><ArrowDownUp size={16} /></span>
-															{/if}
-														</button>
-													{:else}
-														<FlexRender {header} />
-													{/if}
-												{/if}
-											</th>
-										{/each}
-									</tr>
-								{/each}
-							</thead>
-
-							<tbody class="divide-y">
-								{#each rows as row (row.id)}
-									<tr class="hover:bg-muted/30">
-										{#each row.getAllCells() as cell (cell.id)}
-											<td class="px-4 py-3">
-												{#if cell.column.id === 'name'}
-													<div class="font-medium">
-														{row.original.name}
-													</div>
-												{:else if cell.column.id === 'email'}
-													<span class="text-muted-foreground">
-														{row.original.email}
-													</span>
-												{:else if cell.column.id === 'class'}
-													{className(row.original.yearJoined)}
-												{:else if cell.column.id === 'role'}
-													{#if row.original.role === 'admin'}
-														<Badge variant="destructive">Admin</Badge>
-													{:else if row.original.role === 'leader'}
-														<Badge>Leader</Badge>
-													{:else if row.original.role === 'member'}
-														<Badge variant="secondary">Member</Badge>
-													{:else}
-														<Badge variant="outline">Viewer</Badge>
-													{/if}
-												{:else if cell.column.id === 'phoneNumber'}
-													<span class="text-muted-foreground">
-														{row.original.phoneNumber}
-													</span>
-												{:else if cell.column.id === 'notes'}
-													<span class="text-muted-foreground">
-														{row.original.notes}
-													</span>
-												{:else if cell.column.id === 'paid'}
-													{@const sems = semestersPaid(row.original)}
-
-													<div class="flex flex-col gap-1">
-														{#if sems.length === 0}
-															<Badge>Not Paid</Badge>
-														{:else}
-															{#each sems as sem, i (i)}
-																<Badge>
-																	{sem}
-																</Badge>
-															{/each}
-														{/if}
-													</div>
-												{:else if cell.column.id === 'actions'}
-													<div class="flex gap-2 text-right">
-														{#if pageData.data.updateNotes}
-															<Button
-																variant="outline"
-																size="sm"
-																onclick={() => openEdit(row.original)}>
-																Notes
-															</Button>
-														{/if}
-
-														{#if pageData.data.editUser}
-															<Button
-																variant="outline"
-																size="sm"
-																onclick={() => openEdit(row.original)}>
-																Edit
-															</Button>
-														{/if}
-
-														{#if pageData.data.deleteUser}
-															<DropdownMenu.Root>
-																<DropdownMenu.Trigger
-																	class={buttonVariants({
-																		variant: 'outline',
-																		size: 'sm'
-																	})}>
-																	...
-																</DropdownMenu.Trigger>
-
-																<DropdownMenu.Content>
-																	<DropdownMenu.Group>
-																		<DropdownMenu.Label>User Actions</DropdownMenu.Label>
-
-																		<DropdownMenu.Separator />
-
-																		<ActionWrapper
-																			onclick={async () => {
-																				await updateUserPaid({
-																					id: row.original.id,
-																					paid: true,
-																					semesters: 2
-																				});
-
-																				data.refresh();
-																			}}>
-																			{#snippet children({ props, spinnerIcon })}
-																				<DropdownMenu.Item
-																					{...props}
-																					title="User paid for 2 semesters">
-																					{@render spinnerIcon()}
-																					Paid 2 semesters
-																				</DropdownMenu.Item>
-																			{/snippet}
-																		</ActionWrapper>
-
-																		<ActionWrapper
-																			onclick={async () => {
-																				await updateUserPaid({
-																					id: row.original.id,
-																					paid: true,
-																					semesters: 1
-																				});
-
-																				data.refresh();
-																			}}>
-																			{#snippet children({ props, spinnerIcon })}
-																				<DropdownMenu.Item
-																					{...props}
-																					title="User paid for 1 semester">
-																					{@render spinnerIcon()}
-																					Paid 1 semester
-																				</DropdownMenu.Item>
-																			{/snippet}
-																		</ActionWrapper>
-
-																		<ActionWrapper
-																			onclick={async () => {
-																				await updateUserPaid({
-																					id: row.original.id,
-																					paid: false,
-																					semesters: 1
-																				});
-
-																				data.refresh();
-																			}}>
-																			{#snippet children({ props, spinnerIcon })}
-																				<DropdownMenu.Item
-																					{...props}
-																					title="Set this user to unpaid">
-																					{@render spinnerIcon()}
-																					Mark user unpaid
-																				</DropdownMenu.Item>
-																			{/snippet}
-																		</ActionWrapper>
-
-																		<ActionWrapper
-																			onclick={async () => {
-																				const confirm = await Swal2.fire({
-																					title: 'Delete User',
-																					text: 'Are you sure you want to delete this user?',
-																					icon: 'warning',
-																					showCancelButton: true,
-																					confirmButtonText: 'Delete',
-																					cancelButtonText: 'Cancel'
-																				});
-
-																				if (!confirm.isConfirmed) {
-																					return;
-																				}
-
-																				await deleteUser({
-																					userId: row.original.id
-																				});
-
-																				data.refresh();
-																			}}>
-																			{#snippet children({ props, spinnerIcon })}
-																				<DropdownMenu.Item {...props} title="Delete this user">
-																					{@render spinnerIcon()}
-																					Delete
-																				</DropdownMenu.Item>
-																			{/snippet}
-																		</ActionWrapper>
-																	</DropdownMenu.Group>
-																</DropdownMenu.Content>
-															</DropdownMenu.Root>
-														{/if}
-													</div>
-												{:else}
-													<FlexRender {cell} />
-												{/if}
-											</td>
-										{/each}
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-
-					<!-- Pagination -->
-					<div class="flex items-center justify-between border-t px-4 py-3">
-						<div class="text-sm text-muted-foreground">
-							Showing
-							{rows.length}
-							of
-							{filteredRowCount}
-							users
-						</div>
-
-						<div class="flex items-center gap-2">
-							<Select.Root
-								type="single"
-								value={String(pagination.pageSize)}
-								onValueChange={(value) => {
-									table.setPageSize(Number(value));
-								}}>
-								<Select.Trigger class="w-24">
-									{pagination.pageSize}
-								</Select.Trigger>
-
-								<Select.Content>
-									<Select.Item value="10">10</Select.Item>
-
-									<Select.Item value="25">25</Select.Item>
-
-									<Select.Item value="50">50</Select.Item>
-
-									<Select.Item value="100">100</Select.Item>
-								</Select.Content>
-							</Select.Root>
-
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={!table.getCanPreviousPage()}
-								onclick={() => table.previousPage()}>
-								Previous
-							</Button>
-
-							<span class="min-w-20 text-center text-sm">
-								Page
-								{pagination.pageIndex + 1}
-								of
-								{table.getPageCount()}
-							</span>
-
-							<Button
-								variant="outline"
-								size="sm"
-								disabled={!table.getCanNextPage()}
-								onclick={() => table.nextPage()}>
-								Next
-							</Button>
-						</div>
-					</div>
-				{/if}
-			{/await}
+			<DataTable data={userData} {columns} pageSize={25} emptyMessage="No users found." />
 		</Card.Content>
 	</Card.Root>
 </div>

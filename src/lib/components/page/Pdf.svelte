@@ -4,19 +4,18 @@
 	import * as Card from '../ui/card';
 	import { type PageContent } from './Page.svelte';
 	import { GripVertical } from 'lucide-svelte';
-	import { Swal2 } from '#lib/utils';
-	import { getPageStuff } from './context';
 	type Pdf = PageContent & { type: 'pdf' };
 	let {
 		pdf = $bindable(),
 		editMode,
-		rowIndex
-	}: { pdf: Pdf; editMode: boolean; rowIndex: number } = $props();
+		rowIndex,
+		props
+	}: { pdf: Pdf; editMode: boolean; rowIndex: number; props: Record<string, unknown> } = $props();
 	let expanded = $state(false);
-	let pageStuff = getPageStuff();
 </script>
 
 <Card.Root
+	{...props}
 	{@attach attachDraggable(() => ({
 		container: 'item row:' + rowIndex.toString(),
 		handle: '.drag-handle-item',
@@ -30,27 +29,6 @@
 	class="relative flex-1 p-0">
 	{#if editMode}
 		<GripVertical class="drag-handle-item absolute top-1 left-1" />
-		<Button
-			onclick={async () => {
-				let res = await Swal2.fire({
-					icon: 'warning',
-					title: 'Are you sure you want to delete this card?',
-					showCloseButton: true,
-					showCancelButton: true
-				});
-				if (res.isConfirmed) {
-					if (pageStuff.content[rowIndex].columns.length === 1) {
-						pageStuff.content.splice(rowIndex, 1);
-					} else {
-						let column = pageStuff.content[rowIndex].columns.findIndex((e) => e.id === pdf.id);
-						pageStuff.content[rowIndex].columns.splice(column, 1);
-					}
-				}
-			}}
-			variant="destructive"
-			class="drag-handle absolute top-1 right-1">
-			Del
-		</Button>
 	{/if}
 	<div style="border-color: blue;" class="expand flex h-full w-full flex-col border-l-4 p-6">
 		<Card.Header class="text-2xl">
