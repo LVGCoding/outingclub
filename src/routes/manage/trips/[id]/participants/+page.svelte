@@ -6,7 +6,11 @@
 	import { Skeleton } from '#lib/components/ui/skeleton';
 	import { toast } from 'svelte-sonner';
 
-	import { getTripParticipants, updateParticipantStatus } from '../../../../query/trips.remote';
+	import {
+		getTripParticipants,
+		updateParticipantStatus,
+		updateParticipantStatusBulk
+	} from '../../../../query/trips.remote';
 
 	import { page } from '$app/state';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/';
@@ -21,7 +25,12 @@
 	} from '@tanstack/svelte-table';
 	import type { DataTableColumnMeta } from '#lib/components/dataTable/DataTable.svelte';
 	import DataTable from '#lib/components/dataTable/DataTable.svelte';
-	import type { formElement } from '#lib/components/FormElement.svelte';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/';
+	import { buttonVariants } from '#lib/components/ui/button/button.svelte';
+	import { Swal2 } from '#lib/utils';
+	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
+	import { extendTailwindMerge } from 'tailwind-merge';
+	import { Button } from '#lib/components/ui/button/index.ts';
 
 	const data = getTripParticipants({
 		id: page.params.id ?? ''
@@ -158,7 +167,7 @@
 		return columns;
 	});
 
-	const columns = [
+	const columns = $derived([
 		{
 			id: 'participant',
 			header: 'Participant',
@@ -276,7 +285,83 @@
 			} satisfies DataTableColumnMeta
 		},
 		...formColumns
-	] satisfies ColumnDef<TableFeatures, Participant>[];
+	]) satisfies ColumnDef<TableFeatures, Participant>[];
+
+	async function exportToTable() {
+		let elements: {
+			number: string;
+			name: string;
+			email: string;
+			phoneNumber: string;
+			emergency: string;
+			emergencyPhone: string;
+		}[] = [
+			{
+				number: '',
+				name: 'Name',
+				email: 'RPI Email',
+				phoneNumber: 'Phone Number',
+				emergency: 'Emergency Contact',
+				emergencyPhone: 'Phone Number'
+			}
+		];
+		if (!data.current) return;
+		let i = 1;
+		for (const el of data.current.participants) {
+			if (el.signup.status === 'accepted') {
+				elements.push({
+					number: i.toString(),
+					name: el.user.name,
+					email: el.user.email,
+					phoneNumber: el.user.phoneNumber,
+					emergency: el.user.emergencyContact,
+					emergencyPhone: el.user.emergencyContactNumber
+				});
+				i++;
+			}
+		}
+		await copyTableToClipboard(elements);
+	}
+
+	async function copyTableToClipboard(data: Record<string, string>[]) {
+		if (data.length === 0) return;
+
+		const columns = Object.keys(data[0]);
+
+		// HTML table
+		const html = `
+        <table border="1">
+            <tbody>
+                ${data
+									.map(
+										(row) => `
+                    <tr>
+                        ${columns.map((c) => `<td>${escape(String(row[c] ?? ''))}</td>`).join('')}
+                    </tr>
+                `
+									)
+									.join('')}
+            </tbody>
+        </table>
+    `;
+
+		// Plain text fallback (tab-separated)
+		const text = [
+			columns.join('\t'),
+			...data.map((row) => columns.map((c) => row[c] ?? '').join('\t'))
+		].join('\n');
+
+		await navigator.clipboard.write([
+			new ClipboardItem({
+				'text/html': new Blob([html], { type: 'text/html' }),
+				'text/plain': new Blob([text], { type: 'text/plain' })
+			})
+		]);
+	}
+
+	function escape(str: string) {
+		return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
 </script>
 
 {#snippet Status(participant: Participant)}
@@ -347,7 +432,73 @@
 					</div>
 
 					<div class="text-sm text-muted-foreground">
-						{result.trip.activity}
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger class={buttonVariants({ variant: 'outline', size: 'icon-sm' })}>
+								...
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Content>
+								<DropdownMenu.Group>
+									<DropdownMenu.Label>Actions</DropdownMenu.Label>
+									<ActionWrapper
+										onclick={async () => {
+											await updateParticipantStatusBulk({
+												participantId:
+													data.current?.participants.reduce(
+														(cur, el) => (el.signup.status === 'pending' ? [...cur, el.id] : cur),
+														[] as string[]
+													) ?? [],
+												status: 'declined'
+											});
+											data.refresh();
+										}}>
+										{#snippet children({ props, spinnerIcon })}
+											<DropdownMenu.Item {...props}>
+												{@render spinnerIcon()} Decline Non Accepted
+											</DropdownMenu.Item>
+										{/snippet}
+									</ActionWrapper>
+									<DropdownMenu.Item
+										onclick={async () => {
+											exportToTable();
+											Swal2.fire('Coppied', 'The emails were coppied to your clipboard', 'success');
+										}}>
+										Copy Trip sheet participants
+									</DropdownMenu.Item>
+									<DropdownMenu.Item
+										onclick={async () => {
+											let emails =
+												data.current?.participants.reduce(
+													(cur, el, i) =>
+														cur +
+														(el.signup.status === 'accepted'
+															? (i !== 0 ? ', ' : '') + el.user.email
+															: ''),
+													''
+												) ?? '';
+											await navigator.clipboard.writeText(emails);
+											Swal2.fire('Coppied', 'The emails were coppied to your clipboard', 'success');
+										}}>
+										Copy Accepted Emails
+									</DropdownMenu.Item>
+									<DropdownMenu.Item
+										onclick={async () => {
+											let emails =
+												data.current?.participants.reduce(
+													(cur, el, i) =>
+														cur +
+														(el.signup.status === 'declined'
+															? (i !== 0 ? ', ' : '') + el.user.email
+															: ''),
+													''
+												) ?? '';
+											await navigator.clipboard.writeText(emails);
+											Swal2.fire('Coppied', 'The emails were coppied to your clipboard', 'success');
+										}}>
+										Copy Declined Emails
+									</DropdownMenu.Item>
+								</DropdownMenu.Group>
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
 					</div>
 				</div>
 			</Card.Header>
@@ -370,6 +521,22 @@
 							{@const participant = row.original}
 
 							<div class="space-y-5">
+								<Button
+									onclick={() => {
+										let element = [
+											{
+												number: '',
+												name: row.original.user.name,
+												email: row.original.user.email,
+												phoneNumber: row.original.user.phoneNumber,
+												emergency: row.original.user.emergencyContact,
+												emergencyPhone: row.original.user.emergencyContactNumber
+											}
+										];
+										copyTableToClipboard(element);
+									}}>
+									Copy User trip form row
+								</Button>
 								<div class="grid gap-6 md:grid-cols-3">
 									<!-- Contact -->
 									<div>
@@ -389,7 +556,20 @@
 											</div>
 										</div>
 									</div>
+									<!-- extendTailwindMerge contact -->
+									<div>
+										<h4 class="mb-3 text-sm font-medium">Emergency Contact</h4>
 
+										<div class="space-y-1 text-sm">
+											<div>
+												{participant.user.emergencyContact}
+											</div>
+
+											<div class="text-muted-foreground">
+												{participant.user.emergencyContactNumber}
+											</div>
+										</div>
+									</div>
 									<!-- History -->
 									<div>
 										<h4 class="mb-3 text-sm font-medium">Trip history</h4>

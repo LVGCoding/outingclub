@@ -27,6 +27,10 @@ export const user = sqliteTable("user", {
   lastLogin: integer("last_login", { mode: "timestamp_ms" })
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .notNull(),
+  emergencyContact: text("emergency_contact").default("Test").notNull(),
+  emergencyContactNumber: text("emergency_contact_number")
+    .default("000-000-0000")
+    .notNull(),
 });
 
 export const session = sqliteTable(

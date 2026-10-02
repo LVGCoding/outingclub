@@ -1,4 +1,4 @@
-import { account, tripLeaders, tripParticipants, trips, user } from '#lib/server/db/schema';
+import { tripLeaders, tripParticipants, trips, user } from '#lib/server/db/schema';
 import { command, getRequestEvent, query } from '$app/server';
 import { db } from '#lib/server/db';
 import { and, eq, inArray, or, lt } from 'drizzle-orm';
@@ -41,22 +41,7 @@ export const createTrip = command(async () => {
 		title: 'Hike',
 		status: 'hidden',
 		id: id,
-		formElements: [
-			{
-				id: 0.18210471522141958,
-				order: 0,
-				type: 'text',
-				label: 'Emergency contact full name',
-				required: true
-			},
-			{
-				id: 0.7544638509275049,
-				order: 1,
-				type: 'text',
-				label: 'Emergency contact phone number',
-				required: true
-			}
-		]
+		formElements: []
 	});
 	if (res.lastInsertRowid) {
 		await db.insert(tripLeaders).values({
@@ -309,7 +294,9 @@ export const getTripParticipants = query(v.object({ id: v.string() }), async ({ 
 					phoneNumber: true,
 					image: true,
 					yearJoined: true,
-					notes: true
+					notes: true,
+					emergencyContact: true,
+					emergencyContactNumber: true
 				}
 			}
 		}
@@ -407,6 +394,23 @@ export const updateParticipantStatus = command(
 			throw new Error('Participant not found');
 		}
 		await db.update(tripParticipants).set({ status }).where(eq(tripParticipants.id, participantId));
+		return true;
+	}
+);
+
+export const updateParticipantStatusBulk = command(
+	v.object({
+		participantId: v.array(v.string()),
+		status: v.picklist(['pending', 'accepted', 'declined', 'cancelled', 'attended', 'no_show'])
+	}),
+	async ({ participantId, status }) => {
+		if (!hasPermission({ trip: ['manage'] })) {
+			throw new Error('Permission Denied');
+		}
+		await db
+			.update(tripParticipants)
+			.set({ status })
+			.where(inArray(tripParticipants.id, participantId));
 		return true;
 	}
 );

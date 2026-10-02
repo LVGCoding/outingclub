@@ -17,6 +17,7 @@ import { LayoutContainerNode, LayoutItemNode } from 'svelte-lexical';
 // Your nodes
 import { ImageNode } from '#lib/components/textEditor/image/ImageNode';
 import { ButtonLinkNode } from '#lib/components/textEditor/linkButton/ButtonLinkNode';
+import { ColumnLayoutNode } from '#lib/components/textEditor/columnLayout/ColumnLayoutNode';
 const nodes = [
 	ListNode,
 	ListItemNode,
@@ -30,7 +31,8 @@ const nodes = [
 	LayoutContainerNode,
 	LayoutItemNode,
 	ButtonLinkNode,
-	ImageNode
+	ImageNode,
+	ColumnLayoutNode
 ];
 export function renderLexical(content: string | null): string {
 	if (!content) {

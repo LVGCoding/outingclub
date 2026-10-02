@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Table from '#lib/components/ui/table';
-	import { Card, CardContent, CardHeader, CardTitle } from '#lib/components/ui/card';
+	import * as Card from '#lib/components/ui/card';
 	import { Badge } from '#lib/components/ui/badge';
 	import { Separator } from '#lib/components/ui/separator';
 	import { Progress } from '#lib/components/ui/progress';
@@ -207,14 +207,14 @@
 	);
 </script>
 
-<Card class="w-[98%] p-4 lg:w-[80%]">
-	<CardHeader>
+<Card.Root class="w-[98%] p-4 lg:w-[90%]">
+	<Card.Header>
 		<div class="flex items-center justify-between gap-4">
 			<div>
-				<CardTitle class="flex items-center gap-2">
+				<Card.Title class="flex items-center gap-2">
 					<BarChart3 class="size-5" />
 					Participant Data
-				</CardTitle>
+				</Card.Title>
 
 				<p class="mt-1 text-sm text-muted-foreground">Aggregate responses from participants</p>
 			</div>
@@ -227,9 +227,9 @@
 				</Badge>
 			</div>
 		</div>
-	</CardHeader>
+	</Card.Header>
 
-	<CardContent class="space-y-6">
+	<Card.Content class="space-y-6">
 		{#if fields.length === 0}
 			<div class="py-8 text-center text-muted-foreground">No participant form data available.</div>
 		{:else}
@@ -410,5 +410,5 @@
 				{/if}
 			{/if}
 		{/if}
-	</CardContent>
-</Card>
+	</Card.Content>
+</Card.Root>

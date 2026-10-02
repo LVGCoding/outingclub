@@ -173,7 +173,26 @@
 										name="phone-reg"
 										autocomplete="email"
 										placeholder="123-456-7890"
-										pattern={'[0-9]{3}-[0-9]{3}-[0-9]{4}'}
+										class="mt-2 h-11" />
+								</div>
+								<div>
+									<Label for="register-phone">Emergency Contact Name</Label>
+
+									<Input
+										id="emergency-register-name"
+										type="text"
+										name="name-reg-emergency"
+										placeholder="Example Name"
+										class="mt-2 h-11" />
+								</div>
+								<div>
+									<Label for="register-phone">Emergency Contact Phone Number</Label>
+
+									<Input
+										id="emergency-register-phone"
+										type="tel"
+										name="phone-reg-emergency"
+										placeholder="123-456-7890"
 										class="mt-2 h-11" />
 								</div>
 

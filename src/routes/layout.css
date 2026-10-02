@@ -146,3 +146,14 @@ span:has(> .right-image) {
 .SL_Theme__table td {
 	border-color: inherit;
 }
+
+.column-layout {
+	columns: var(--column-layout-columns, 2);
+	column-gap: 2rem;
+	column-fill: balance;
+}
+
+.column-layout > p {
+	break-inside: avoid;
+	margin: 0 0 0.5rem;
+}

@@ -49,6 +49,8 @@ export const actions: Actions = {
 		const firstName = formData.get('first-name-reg')?.toString() ?? '';
 		const lastName = formData.get('last-name-reg')?.toString() ?? '';
 		const yearJoined = formData.get('year-joined-reg')?.toString() ?? '';
+		const emergencyName = formData.get('name-reg-emergency')?.toString() ?? '';
+		const emergencyPhone = formData.get('phone-reg-emergency')?.toString() ?? '';
 		if (firstName.length < 1) {
 			return fail(400, { message: 'First name must be at least 1 character' });
 		}
@@ -71,7 +73,9 @@ export const actions: Actions = {
 					callbackURL: '/auth/verification-success',
 					phoneNumber: phoneNumber,
 					yearJoined: Number(yearJoined),
-					lastLogin: new Date()
+					lastLogin: new Date(),
+					emergencyContact: emergencyName,
+					emergencyContactNumber: emergencyPhone
 				}
 			});
 		} catch (error) {

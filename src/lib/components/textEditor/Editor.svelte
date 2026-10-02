@@ -62,6 +62,8 @@
 	import TableButton from './table/TableButton.svelte';
 	import TableActionPlugin from './table/TableActionPlugin.svelte';
 	import Toolbar from './Toolbar.svelte';
+	import { ColumnLayoutNode } from './columnLayout/ColumnLayoutNode';
+	import ColumnLayoutButton from './columnLayout/ColumnLayoutButton.svelte';
 
 	let {
 		content = $bindable(),
@@ -88,7 +90,8 @@
 			LayoutContainerNode,
 			LayoutItemNode,
 			ButtonLinkNode,
-			ImageNode
+			ImageNode,
+			ColumnLayoutNode
 		],
 		onError: (error: Error) => {
 			throw error;
@@ -163,11 +166,13 @@
 	}}></svelte:document>
 {#if true}
 	<Composer bind:this={composer} {initialConfig}>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class={cn('ul editorStyle editor-shell svelte-lexical m-0! rounded-4xl', {
 				notEditable: !editable,
 				editable: editable
-			})}>
+			})}
+			oncontextmenu={(e) => e.stopPropagation()}>
 			{#if browser}
 				<FloatingLinkEditorPlugin anchorElem={editorContainer} />
 			{/if}
@@ -203,6 +208,7 @@
 							<NumberDropDrownItem />
 						</BlockFormatDropDown>
 						<InsertColumnsDialog />
+						<ColumnLayoutButton />
 					</Toolbar>
 				</div>
 			{/if}
