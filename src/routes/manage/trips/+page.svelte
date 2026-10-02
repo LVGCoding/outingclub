@@ -12,6 +12,7 @@
 	import { Swal2 } from '#lib/utils';
 	import Badge from '#lib/components/ui/badge/badge.svelte';
 	import { goto } from '$app/navigation';
+	import Editor from '#lib/components/textEditor/Editor.svelte';
 
 	const tripsPromise = getTripsLeader();
 	const trips = $derived.by(() => {
@@ -136,7 +137,7 @@
 					</Card.Header>
 					<Card.Content class="p-0 pl-2">
 						<Card.Description>
-							{trip.description}
+							<Editor content={trip.description} />
 							<div class="">
 								<p class="pr-1 font-bold">Leaders:</p>
 								{#each trip.leaders as leader, index (index)}

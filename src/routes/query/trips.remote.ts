@@ -277,7 +277,23 @@ export const getTripParticipants = query(v.object({ id: v.string() }), async ({ 
 	}
 	const trip = await db.query.trips.findFirst({
 		where: eq(trips.id, id),
-		columns: { id: true, title: true, activity: true, time: true, formElements: true }
+		columns: { id: true, title: true, activity: true, time: true, formElements: true },
+		with: {
+			leaders: {
+				with: {
+					users: {
+						columns: {
+							id: true,
+							name: true,
+							email: true,
+							phoneNumber: true,
+							emergencyContact: true,
+							emergencyContactNumber: true
+						}
+					}
+				}
+			}
+		}
 	});
 	if (!trip) {
 		throw new Error('Trip not found');

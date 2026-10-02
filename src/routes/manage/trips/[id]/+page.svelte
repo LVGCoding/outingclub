@@ -22,13 +22,13 @@
 	import * as Popover from '#lib/components/ui/popover';
 	import * as Command from '#lib/components/ui/command/';
 	import { tick } from 'svelte';
-	import { Textarea } from '#lib/components/ui/textarea/';
 	import DateTimePicker from '#lib/components/DateTimePicker.svelte';
 	import { fromDate, getLocalTimeZone } from '@internationalized/date';
 	import { Badge } from '#lib/components/ui/badge';
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
 	import { goto } from '$app/navigation';
 	import * as ToggleGroup from '#lib/components/ui/toggle-group/';
+	import Editor from '#lib/components/textEditor/Editor.svelte';
 
 	let tripPromise = $derived(getTripLeader({ id: page.params.id ?? '' }));
 	let leadersPromise = $derived(getLeaders());
@@ -163,7 +163,7 @@
 					</Popover.Content>
 				</Popover.Root>
 				Description:
-				<Textarea bind:value={trip.description} />
+				<Editor editable={true} bind:content={trip.description} />
 				<DateTimePicker
 					bind:value={
 						() => fromDate(trip.time ?? new Date(), getLocalTimeZone()),

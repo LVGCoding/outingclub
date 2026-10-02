@@ -29,8 +29,7 @@
 	import { buttonVariants } from '#lib/components/ui/button/button.svelte';
 	import { Swal2 } from '#lib/utils';
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
-	import { extendTailwindMerge } from 'tailwind-merge';
-	import { Button } from '#lib/components/ui/button/index.ts';
+	import { Button } from '#lib/components/ui/button/';
 
 	const data = getTripParticipants({
 		id: page.params.id ?? ''
@@ -307,6 +306,17 @@
 		];
 		if (!data.current) return;
 		let i = 1;
+		for (const el of data.current.trip.leaders) {
+			elements.push({
+				number: i.toString(),
+				name: el.users.name,
+				email: el.users.email,
+				phoneNumber: el.users.phoneNumber,
+				emergency: el.users.emergencyContact,
+				emergencyPhone: el.users.emergencyContactNumber
+			});
+			i++;
+		}
 		for (const el of data.current.participants) {
 			if (el.signup.status === 'accepted') {
 				elements.push({

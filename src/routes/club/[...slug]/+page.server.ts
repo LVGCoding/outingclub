@@ -1,4 +1,4 @@
-import { renderLexical } from '#lib/server/lexical/render';
+import { renderLexical } from '#lib/components/textEditor/render';
 import { getPage } from '../../query/page.remote';
 import type { PageServerLoad } from './$types';
 

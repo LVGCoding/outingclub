@@ -5,22 +5,24 @@
 	import { Separator } from '#lib/components/ui/separator';
 	import { page } from '$app/state';
 	import { Swal2 } from '#lib/utils';
-	import { getTrip, signUp } from '../../query/trips.remote';
+	import { signUp } from '../../query/trips.remote';
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
-
-	let tripPromise = $derived(getTrip({ id: page.params.id ?? '' }));
-	let trip = $derived(await tripPromise);
+	import type { PageProps } from './$types';
+	import { invalidate } from '$app/navigation';
+	import LexicalRenderer from '#lib/components/textEditor/LexicalRenderer.svelte';
+	let { data }: PageProps = $props();
+	let trip = $derived(data.trip);
 	let valid = $derived(trip.formElements?.map(() => false) ?? []);
 	let responses = $derived(trip.formElements?.map(() => null) ?? []);
 </script>
 
 <div class="flex flex-col items-center justify-center">
-	<Card.Root class="w-[98%] lg:w-[80%]">
+	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<Card.Header>
 			<Card.Title>{trip.title}: {trip.activity}</Card.Title>
 		</Card.Header>
 		<Card.Content>
-			{trip.description}
+			<LexicalRenderer content={trip.description} />
 			<div class="">
 				<p class="pr-1 font-bold">Leaders:</p>
 				{#each trip.leaders as leader, index (index)}
@@ -71,7 +73,7 @@
 								text: 'You have successfully signed up for this trip.',
 								icon: 'success'
 							});
-							tripPromise.refresh();
+							invalidate('app:trip');
 						});
 					}}>
 					{#snippet children({ props, spinnerIcon })}

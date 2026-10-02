@@ -1,6 +1,6 @@
 import { getPage } from './query/page.remote';
 import type { PageServerLoad } from './$types';
-import { renderLexical } from '#lib/server/lexical/render';
+import { renderLexical } from '#lib/components/textEditor/render';
 
 export const load: PageServerLoad = async () => {
 	const page = await getPage({ path: '/', pageCategory: 'main' });
