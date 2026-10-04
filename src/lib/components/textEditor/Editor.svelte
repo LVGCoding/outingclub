@@ -38,7 +38,6 @@
 		TableNode,
 		TableRowNode,
 		TableCellNode,
-		TableCellResizerPlugin,
 		HorizontalRuleNode,
 		HorizontalRulePlugin,
 		InsertDropDown,
@@ -64,6 +63,8 @@
 	import Toolbar from './Toolbar.svelte';
 	import { ColumnLayoutNode } from './columnLayout/ColumnLayoutNode';
 	import ColumnLayoutButton from './columnLayout/ColumnLayoutButton.svelte';
+	import { registerColumnLayoutCommands } from './columnLayout/columnLayoutPlugin';
+	import TableCellResizerPlugin from './table/TableCellResizerPlugin.svelte';
 
 	let {
 		content = $bindable(),
@@ -156,6 +157,12 @@
 		const editor = composer.getEditor();
 		editor.setEditable(editable ?? false);
 	});
+	$effect(() => {
+		if (!composer) return;
+		const editor = composer.getEditor();
+
+		return registerColumnLayoutCommands(editor);
+	});
 </script>
 
 <svelte:document
@@ -234,7 +241,7 @@
 					onChange={(e) => {
 						let string = JSON.stringify(e.toJSON());
 
-						content = string;
+						content = string.replace(/’/g, "'");
 						change = true;
 						if (onChange) onChange(string);
 					}} />

@@ -4,7 +4,8 @@ import {
 	type LexicalNode,
 	type NodeKey,
 	type SerializedElementNode,
-	type DOMExportOutput
+	type DOMExportOutput,
+	type DOMConversionMap
 } from 'lexical';
 
 export type SerializedColumnLayoutNode = SerializedElementNode & {
@@ -63,6 +64,30 @@ export class ColumnLayoutNode extends ElementNode {
 		return dom;
 	}
 
+	static importDOM(): DOMConversionMap | null {
+		//TODO
+		return {
+			div: (node: HTMLElement) => {
+				console.log(node.style.getPropertyValue('column-count'));
+				if (node.tagName === 'DIV' && node.style.getPropertyValue('column-count')) {
+					return {
+						conversion: (element) => {
+							const div = element as HTMLDivElement;
+
+							return {
+								node: $createColumnLayoutNode(
+									Number(div.style.getPropertyValue('column-count') || 1)
+								)
+							};
+						},
+						priority: 4
+					};
+				}
+				return null;
+			}
+		};
+	}
+
 	exportDOM(): DOMExportOutput {
 		const dom = document.createElement('div');
 
@@ -84,25 +109,13 @@ export class ColumnLayoutNode extends ElementNode {
 	}
 
 	isInline(): boolean {
-		return false;
-	}
-
-	canBeEmpty(): boolean {
-		return false;
-	}
-
-	canInsertTextBefore(): boolean {
-		return false;
-	}
-
-	canInsertTextAfter(): boolean {
-		return false;
+		return true;
 	}
 }
 
 export function $createColumnLayoutNode(columns = 2): ColumnLayoutNode {
 	const node = new ColumnLayoutNode(columns);
-
+	console.log('in');
 	node.append($createParagraphNode());
 
 	return node;

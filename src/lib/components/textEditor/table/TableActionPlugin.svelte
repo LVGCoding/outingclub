@@ -243,7 +243,14 @@
 	};
 	const deleteTableRowAtSelection = () => {
 		editor.update(() => {
-			_deleteTableRowAtSelection();
+			if (!tableCellNode) return;
+			const tableNode = getTableNodeFromLexicalNodeOrThrow(tableCellNode);
+			if (tableNode.__size === 1) {
+				tableNode.remove();
+				clearTableSelection();
+			} else {
+				_deleteTableRowAtSelection();
+			}
 		});
 	};
 
@@ -259,7 +266,14 @@
 
 	const deleteTableColumnAtSelection = () => {
 		editor.update(() => {
-			_deleteTableColumnAtSelection();
+			if (!tableCellNode) return;
+			const tableNode = getTableNodeFromLexicalNodeOrThrow(tableCellNode);
+			if (tableNode.__colWidths?.length === 1) {
+				tableNode.remove();
+				clearTableSelection();
+			} else {
+				_deleteTableColumnAtSelection();
+			}
 		});
 	};
 

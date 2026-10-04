@@ -6,8 +6,10 @@
 	import { enhance } from '$app/forms';
 	import { cn } from '#lib/utils';
 	import { page } from '$app/state';
-	import { ChevronDown, ChevronRight, MoonIcon, SunIcon } from 'lucide-svelte';
-	import { bgImages } from '#lib/generated/images';
+	import { ChevronDown, ChevronRight, CircleUserRound, MoonIcon, SunIcon } from 'lucide-svelte';
+	import { bgImages, goofyImages } from '#lib/generated/images';
+	import { onMount } from 'svelte';
+	import { goofyMode } from '#lib/goofy/goofyMode.svelte';
 
 	let { children, data }: LayoutProps = $props();
 
@@ -19,6 +21,9 @@
 		return items;
 	});
 	let width = $state(1000);
+	onMount(() => {
+		goofyMode.initialize();
+	});
 </script>
 
 <svelte:body bind:clientWidth={width} />
@@ -178,15 +183,21 @@
 						class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all! dark:scale-100 dark:rotate-0" />
 					<span class="sr-only">Toggle theme</span>
 				</Button>
+				<Button href="/profile" class="ml-2" variant="outline" size="icon">
+					<CircleUserRound />
+				</Button>
+				<Button class="ml-2" variant="outline" size="icon" onclick={() => goofyMode.toggle()}>
+					{goofyMode.enabled ? '🤨' : '🤪'}
+				</Button>
 			</ul>
 		</nav>
 	</div>
 </header>
 <div
 	class="height-full w-full grow overflow-y-auto p-5 lg:p-10"
-	style="background-image: url(/{bgImages[
-		Math.floor(Math.random() * bgImages.length)
-	]});  background-size: cover;
+	style="background-image: url({!goofyMode.enabled
+		? bgImages[Math.floor(Math.random() * bgImages.length)]
+		: goofyImages[Math.floor(Math.random() * goofyImages.length)]});  background-size: cover;
 	background-position: center;
 ">
 	{@render children()}

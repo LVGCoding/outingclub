@@ -109,8 +109,27 @@ export class ImageNode extends DecoratorNode<DecoratorImageType> {
 	}
 
 	static importDOM(): DOMConversionMap | null {
-		//TODO
-		return {};
+		return {
+			img: (node: HTMLElement) => {
+				console.log(node.tagName);
+				if (node.tagName === 'IMG') {
+					return {
+						conversion: (element) => {
+							const img = element as HTMLImageElement;
+							let wrapMode: ImageWrapMode = 'inline';
+							if (img.classList.contains('left-image')) wrapMode = 'left';
+							if (img.classList.contains('right-image')) wrapMode = 'right';
+							const size: Size = { width: img.width, height: img.height };
+							return {
+								node: $createImageNode(img.src, img.alt, wrapMode, size)
+							};
+						},
+						priority: 1
+					};
+				}
+				return null;
+			}
+		};
 	}
 
 	exportJSON(): SerializedImageNode {

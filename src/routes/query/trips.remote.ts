@@ -2,7 +2,7 @@ import { tripLeaders, tripParticipants, trips, user } from '#lib/server/db/schem
 import { command, getRequestEvent, query } from '$app/server';
 import { db } from '#lib/server/db';
 import { and, eq, inArray, or, lt } from 'drizzle-orm';
-import { auth, getCurrentUser, hasPermission } from '#lib/server/auth';
+import { auth, getCurrentSession, getCurrentUser, hasPermission } from '#lib/server/auth';
 import * as v from 'valibot';
 import { type formElement, type formResponse } from '#lib/components/FormElement.svelte';
 
@@ -582,3 +582,28 @@ export const removeOldUsers = command(async () => {
 	// 2. Query using the integer timestamp
 	await db.delete(user).where(lt(user.lastLogin, oneYearAgoMs));
 });
+
+export const getCurrentUserQuery = query(async () => {
+	const session = await getCurrentSession();
+	return session?.user;
+});
+
+export const updateCurrentUser = command(
+	v.object({
+		name: v.string(),
+		email: v.string(),
+		yearJoined: v.number(),
+		phoneNumber: v.string(),
+		emergencyContact: v.string(),
+		emergencyContactNumber: v.string()
+	}),
+	async ({ name, email, yearJoined, phoneNumber, emergencyContact, emergencyContactNumber }) => {
+		const session = await getCurrentSession();
+		if (!session) throw new Error('No session');
+		await db
+			.update(user)
+			.set({ name, email, yearJoined, phoneNumber, emergencyContact, emergencyContactNumber })
+			.where(eq(user.id, session.user.id));
+		return session?.user;
+	}
+);

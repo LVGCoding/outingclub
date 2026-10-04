@@ -76,7 +76,7 @@ export class ButtonLinkNode extends DecoratorNode<DecoratorButtonLinkType> {
 	}
 
 	static importDOM(): DOMConversionMap | null {
-		//TODO
+		//Does not need one
 		return {};
 	}
 
