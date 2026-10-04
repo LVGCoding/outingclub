@@ -1,7 +1,7 @@
 import type { PageContent } from '#lib/components/page/Page.svelte';
 import { hasPermission } from '#lib/server/auth';
 import { db } from '#lib/server/db/';
-import { pages } from '#lib/server/db/schema';
+import { pages, pageCategoryValid } from '#lib/server/db/schema';
 import { command, query } from '$app/server';
 import { and, eq } from 'drizzle-orm';
 import * as v from 'valibot';
@@ -9,12 +9,7 @@ import * as v from 'valibot';
 export const getPage = query(
 	v.object({
 		path: v.string(),
-		pageCategory: v.union([
-			v.literal('activity'),
-			v.literal('club'),
-			v.literal('main'),
-			v.literal('social')
-		])
+		pageCategory: pageCategoryValid
 	}),
 	async ({ path, pageCategory }) => {
 		const pathFound = await db.query.pages.findFirst({
@@ -90,12 +85,7 @@ export const createExternalPage = command(
 	v.object({
 		title: v.string(),
 		link: v.string(),
-		category: v.union([
-			v.literal('activity'),
-			v.literal('club'),
-			v.literal('main'),
-			v.literal('social')
-		])
+		category: pageCategoryValid
 	}),
 	async ({ link, title, category }) => {
 		if (!hasPermission({ page: ['create'] })) {
@@ -117,12 +107,7 @@ export const createExternalPage = command(
 
 export const createInternalPage = command(
 	v.object({
-		category: v.union([
-			v.literal('activity'),
-			v.literal('club'),
-			v.literal('main'),
-			v.literal('social')
-		])
+		category: pageCategoryValid
 	}),
 	async ({ category }) => {
 		if (!hasPermission({ page: ['create'] })) {
@@ -159,12 +144,7 @@ export const updatePage = command(
 		id: v.string(),
 		title: v.string(),
 		path: v.string(),
-		type: v.union([
-			v.literal('activity'),
-			v.literal('club'),
-			v.literal('main'),
-			v.literal('social')
-		]),
+		type: pageCategoryValid,
 		content: v.array(v.unknown())
 	}),
 	async ({ id, title, path, type, content }) => {

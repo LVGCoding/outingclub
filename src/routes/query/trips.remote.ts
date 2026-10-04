@@ -1,4 +1,11 @@
-import { tripLeaders, tripParticipants, trips, user } from '#lib/server/db/schema';
+import {
+	participantStatusValid,
+	tripLeaders,
+	tripParticipants,
+	trips,
+	tripStatusValid,
+	user
+} from '#lib/server/db/schema';
 import { command, getRequestEvent, query } from '$app/server';
 import { db } from '#lib/server/db';
 import { and, eq, inArray, or, lt } from 'drizzle-orm';
@@ -369,12 +376,7 @@ export const getTripParticipants = query(v.object({ id: v.string() }), async ({ 
 export const updateTripStatus = command(
 	v.object({
 		id: v.string(),
-		status: v.union([
-			v.literal('hidden'),
-			v.literal('pending'),
-			v.literal('completed'),
-			v.literal('cancelled')
-		])
+		status: tripStatusValid
 	}),
 	async ({ id, status }) => {
 		if (!hasPermission({ trip: ['update'] })) {
@@ -396,7 +398,7 @@ export const updateTripStatus = command(
 export const updateParticipantStatus = command(
 	v.object({
 		participantId: v.string(),
-		status: v.picklist(['pending', 'accepted', 'declined', 'cancelled', 'attended', 'no_show'])
+		status: participantStatusValid
 	}),
 	async ({ participantId, status }) => {
 		if (!hasPermission({ trip: ['manage'] })) {
@@ -417,7 +419,7 @@ export const updateParticipantStatus = command(
 export const updateParticipantStatusBulk = command(
 	v.object({
 		participantId: v.array(v.string()),
-		status: v.picklist(['pending', 'accepted', 'declined', 'cancelled', 'attended', 'no_show'])
+		status: participantStatusValid
 	}),
 	async ({ participantId, status }) => {
 		if (!hasPermission({ trip: ['manage'] })) {

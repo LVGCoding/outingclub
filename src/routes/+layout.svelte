@@ -4,25 +4,49 @@
 	import type { LayoutProps } from './$types';
 	import Button from '#lib/components/ui/button/button.svelte';
 	import { enhance } from '$app/forms';
-	import { cn } from '#lib/utils';
+	import { cn, mulberry32 } from '#lib/utils';
 	import { page } from '$app/state';
 	import { ChevronDown, ChevronRight, CircleUserRound, MoonIcon, SunIcon } from 'lucide-svelte';
-	import { bgImages, goofyImages } from '#lib/generated/images';
 	import { onMount } from 'svelte';
 	import { goofyMode } from '#lib/goofy/goofyMode.svelte';
+	import { setFileContext, type FileState } from './fileState';
+	import { getFiles } from './query/files.remote';
 
 	let { children, data }: LayoutProps = $props();
-
+	let fileState: FileState = $state({
+		backgrounds: [],
+		goofyImages: [],
+		images: [],
+		pdfs: [],
+		refetch: async () => {
+			await getFiles().refresh();
+			const files = await getFiles();
+			fileState.backgrounds = files.filter((f) => f.type === 'backgrounds');
+			fileState.goofyImages = files.filter((f) => f.type === 'goofyImages');
+			fileState.images = files.filter((f) => f.type === 'images');
+			fileState.pdfs = files.filter((f) => f.type === 'pdfs');
+		}
+	});
+	setFileContext(fileState);
+	await fileState.refetch();
+	// svelte-ignore state_referenced_locally
+	let seededRand = mulberry32(data.seed);
+	let backdrop = $derived(
+		!goofyMode.enabled
+			? fileState.backgrounds[Math.floor(seededRand() * fileState.backgrounds.length)]
+			: fileState.goofyImages[Math.floor(seededRand() * fileState.goofyImages.length)]
+	);
 	let manageItems = $derived.by(() => {
 		let items = [];
 		if (data.canCreateTrips) items.push({ label: 'Manage Trips', href: '/manage/trips' });
 		if (data.canViewUsers) items.push({ label: 'Manage Users', href: '/manage/users' });
 		if (data.canCreatePages) items.push({ label: 'Manage Pages', href: '/manage/pages' });
+		if (data.canUploadFiles) items.push({ label: 'Manage Files', href: '/manage/files' });
 		return items;
 	});
 	let width = $state(1000);
 	onMount(() => {
-		goofyMode.initialize();
+		goofyMode.initialize(fileState.goofyImages.map((f) => f.url));
 	});
 </script>
 
@@ -195,9 +219,7 @@
 </header>
 <div
 	class="height-full w-full grow overflow-y-auto p-5 lg:p-10"
-	style="background-image: url({!goofyMode.enabled
-		? bgImages[Math.floor(Math.random() * bgImages.length)]
-		: goofyImages[Math.floor(Math.random() * goofyImages.length)]});  background-size: cover;
+	style="background-image: url({backdrop?.url});  background-size: cover;
 	background-position: center;
 ">
 	{@render children()}

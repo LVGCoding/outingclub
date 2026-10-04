@@ -26,6 +26,8 @@ export const load: LayoutServerLoad = async ({ locals, depends }) => {
 		paths,
 		canCreateTrips: await hasPermission({ trip: ['manage'] }, user?.id),
 		canViewUsers: await hasPermission({ user: ['view'] }, user?.id),
-		canCreatePages: await hasPermission({ page: ['create'] }, user?.id)
+		canCreatePages: await hasPermission({ page: ['create'] }, user?.id),
+		canUploadFiles: await hasPermission({ files: ['upload'] }, user?.id),
+		seed: Math.random() * 1000
 	};
 };

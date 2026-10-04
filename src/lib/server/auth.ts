@@ -11,28 +11,33 @@ import { user as userDb } from '#lib/server/db/schema';
 export const statement = {
 	trip: ['create', 'signup', 'update', 'delete', 'manage'],
 	user: ['set-password', 'update', 'delete', 'view', 'updateNotes'],
-	page: ['create', 'update', 'delete']
+	page: ['create', 'update', 'delete'],
+	files: ['view', 'upload', 'delete']
 } as const;
 
 export const ac = createAccessControl(statement);
 
 export const member = ac.newRole({
-	trip: ['signup']
+	trip: ['signup'],
+	files: ['view']
 });
 
 export const admin = ac.newRole({
 	trip: ['create', 'update', 'signup', 'delete', 'manage'],
 	user: ['view', 'set-password', 'update', 'delete'],
-	page: ['create', 'update', 'delete']
+	page: ['create', 'update', 'delete'],
+	files: ['view', 'upload', 'delete']
 });
 
 export const leader = ac.newRole({
 	trip: ['create', 'update', 'signup', 'delete', 'manage'],
-	user: ['view', 'updateNotes']
+	user: ['view', 'updateNotes'],
+	files: ['view', 'upload']
 });
 
 export const viewer = ac.newRole({
-	trip: []
+	trip: [],
+	files: ['view']
 });
 
 export const auth = betterAuth({

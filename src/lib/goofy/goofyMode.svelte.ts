@@ -1,15 +1,13 @@
-import { goofyImages } from '#lib/generated/images';
-
-const STORAGE_KEY = 'goofy-mode';
-
 let enabled = $state(false);
+
+let goofyImageSources: string[] = [];
 
 const originalSources = new WeakMap<HTMLImageElement, string>();
 
 let observer: MutationObserver | undefined;
 
 function getRandomGoofyImage() {
-	return goofyImages[Math.floor(Math.random() * goofyImages.length)];
+	return goofyImageSources[Math.floor(Math.random() * goofyImageSources.length)];
 }
 
 function goofyifyImage(image: HTMLImageElement) {
@@ -77,10 +75,11 @@ function apply() {
 	}
 }
 
-function initialize() {
+function initialize(imageSources: string[]) {
 	if (typeof window === 'undefined') return;
 
-	enabled = localStorage.getItem(STORAGE_KEY) === 'true';
+	enabled = false;
+	goofyImageSources = imageSources;
 
 	requestAnimationFrame(apply);
 }
@@ -88,15 +87,11 @@ function initialize() {
 function toggle() {
 	enabled = !enabled;
 
-	localStorage.setItem(STORAGE_KEY, String(enabled));
-
 	apply();
 }
 
 function set(value: boolean) {
 	enabled = value;
-
-	localStorage.setItem(STORAGE_KEY, String(value));
 
 	apply();
 }

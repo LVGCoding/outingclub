@@ -14,12 +14,13 @@
 	import { Input } from '#lib/components/ui/input/';
 	import { goto, invalidate } from '$app/navigation';
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
+	import type { PageCategory } from '#lib/server/db/schema';
 
 	let openExternalDialog = $state(false);
 	let socialValue = $state({
 		title: '',
 		link: '',
-		category: 'social' as 'activity' | 'club' | 'main' | 'social'
+		category: 'social' as PageCategory
 	});
 	let { data }: PageProps = $props();
 </script>
@@ -52,12 +53,12 @@
 								socialValue = {
 									title: '',
 									link: '',
-									category: type as 'activity' | 'club' | 'main' | 'social'
+									category: type as PageCategory
 								};
 								openExternalDialog = true;
 							} else {
 								let res = await createInternalPage({
-									category: type as 'activity' | 'club' | 'main' | 'social'
+									category: type as PageCategory
 								});
 								await invalidate('app:paths');
 								goto(`/manage/pages/${res}`);

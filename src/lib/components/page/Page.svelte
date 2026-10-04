@@ -77,6 +77,7 @@
 	import ActionWrapper from '../ActionWrapper.svelte';
 	import { getPageById, updatePage } from '../../../routes/query/page.remote';
 	import { invalidate } from '$app/navigation';
+	import type { PageCategory } from '#lib/server/db/schema';
 
 	let {
 		content = $bindable(),
@@ -287,7 +288,7 @@
 					content,
 					title,
 					path: path ?? '',
-					type: type as 'main' | 'activity' | 'club' | 'social',
+					type: type as PageCategory,
 					id: id
 				});
 				await getPageById({ id: id }).refresh();
