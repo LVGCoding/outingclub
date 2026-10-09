@@ -180,6 +180,9 @@
 			header: 'Notes',
 			accessorKey: 'notes',
 			filterFn: filterFn_includesString,
+			cell: ({ row }) => {
+				return renderSnippet(Notes, row);
+			},
 			meta: {
 				filter: 'text',
 				filterPlaceholder: 'Search notes...'
@@ -299,6 +302,24 @@
 	{:else}
 		<Badge variant="outline">Viewer</Badge>
 	{/if}
+{/snippet}
+
+{#snippet Notes(row: Row<TableFeatures, User>)}
+	{let open = $state(false)}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		onclick={() => (open = !open)}
+		style={open
+			? ''
+			: `display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;`}
+		class="max-w-50 cursor-pointer whitespace-pre-line">
+		{row.original.notes}
+	</div>
 {/snippet}
 
 {#snippet Paid(row: Row<TableFeatures, User>)}

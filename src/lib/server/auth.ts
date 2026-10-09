@@ -32,7 +32,7 @@ export const admin = ac.newRole({
 export const leader = ac.newRole({
 	trip: ['create', 'update', 'signup', 'delete', 'manage'],
 	user: ['view', 'updateNotes'],
-	files: ['view', 'upload']
+	files: ['view']
 });
 
 export const viewer = ac.newRole({

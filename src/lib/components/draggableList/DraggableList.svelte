@@ -48,10 +48,12 @@
 	{@render card({
 		item: dragItem,
 		index: dragIndex,
-		handelProps: {},
+		handelProps: {
+			class: 'cursor-grab'
+		},
 		cardProps: {
-			style: `top:${yPos}px; pointer-events: none;`,
-			class: `absolute inline-block w-[${width}px]`
+			style: `top:${yPos}px; pointer-events: none; width:${width}px;`,
+			class: `fixed`
 		}
 	})}
 {/if}
@@ -72,18 +74,22 @@
 		},
 		cardProps: {
 			ondragstart: (e: DragEvent) => {
+				e.stopPropagation();
 				startDragIndex = i;
 				dragIndex = i;
 				yPos = e.clientY + window.scrollY + handelOffest;
 				dragItem = item;
 			},
-			ondragover: () => {
+			ondragover: (e: DragEvent) => {
+				e.stopPropagation();
 				hoverItemIndex = i;
 			},
 			ondrag: (e: DragEvent) => {
+				e.stopPropagation();
 				yPos = e.clientY + window.scrollY + handelOffest;
 			},
-			ondragend: async () => {
+			ondragend: async (e: DragEvent) => {
+				e.stopPropagation();
 				draggable = false;
 				dragIndex = null;
 				hoverItemIndex = null;

@@ -1,0 +1,22 @@
+diff --git a/node_modules/svelte-lexical/dist/themes/default/shell/ActionBar.css b/node_modules/svelte-lexical/dist/themes/default/shell/ActionBar.css
+index 2cb9257..f3c506f 100644
+--- a/node_modules/svelte-lexical/dist/themes/default/shell/ActionBar.css
++++ b/node_modules/svelte-lexical/dist/themes/default/shell/ActionBar.css
+@@ -95,7 +95,7 @@
+     cursor: not-allowed;
+   }
+ 
+-  @keyframes mic-pulsate-color {
++  /*@keyframes mic-pulsate-color {
+     0% {
+       background-color: #ffdcdc;
+     }
+@@ -105,7 +105,7 @@
+     100% {
+       background-color: #ffdcdc;
+     }
+-  }
++  }*/
+ 
+   .connecting {
+     font-size: 15px;

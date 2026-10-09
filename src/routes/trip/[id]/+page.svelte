@@ -59,22 +59,39 @@
 							});
 							return;
 						}
-						signUp({ tripId: page.params.id ?? '', formData: responses }).then((e) => {
-							if (typeof e === 'string') {
-								Swal2.fire({
-									title: 'Error',
-									text: e,
-									icon: 'error'
-								});
+						let password = null;
+						if (trip.hasPassword) {
+							let res = await Swal2.fire({
+								title: 'What is the trip password',
+								text: 'Please input password',
+								icon: 'question',
+								input: 'text',
+								inputLabel: 'password'
+							});
+							if (res.isConfirmed) {
+								password = res.value ?? null;
+							} else {
 								return;
 							}
-							Swal2.fire({
-								title: 'Success',
-								text: 'You have successfully signed up for this trip.',
-								icon: 'success'
-							});
-							invalidate('app:trip');
-						});
+						}
+						signUp({ tripId: page.params.id ?? '', formData: responses, password: password }).then(
+							(e) => {
+								if (typeof e === 'string') {
+									Swal2.fire({
+										title: 'Error',
+										text: e,
+										icon: 'error'
+									});
+									return;
+								}
+								Swal2.fire({
+									title: 'Success',
+									text: 'You have successfully signed up for this trip.',
+									icon: 'success'
+								});
+								invalidate('app:trip');
+							}
+						);
 					}}>
 					{#snippet children({ props, spinnerIcon })}
 						<Button {...props}>{@render spinnerIcon()}Sign Up</Button>

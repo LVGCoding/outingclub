@@ -74,7 +74,8 @@ export const getTrip = query(v.object({ id: v.string() }), async ({ id }) => {
 			time: true,
 			title: true,
 			id: true,
-			formElements: true
+			formElements: true,
+			password: true
 		},
 		with: {
 			leaders: {
@@ -88,20 +89,33 @@ export const getTrip = query(v.object({ id: v.string() }), async ({ id }) => {
 			}
 		}
 	});
-	return { ...tripFound, formElements: tripFound?.formElements as formElement[] | null };
+	return {
+		...tripFound,
+		hasPassword: !!tripFound?.password,
+		password: '',
+		formElements: tripFound?.formElements as formElement[] | null
+	};
 });
 
 export const signUp = command(
-	v.object({ tripId: v.string(), formData: v.unknown() }),
-	async ({ tripId, formData }) => {
+	v.object({
+		tripId: v.string(),
+		formData: v.unknown(),
+		password: v.union([v.string(), v.null()])
+	}),
+	async ({ tripId, formData, password }) => {
 		const trip = await db.query.trips.findFirst({
 			where: eq(trips.id, tripId),
 			columns: {
-				status: true
+				status: true,
+				password: true
 			}
 		});
 		if (trip?.status !== 'pending') {
 			return 'This trip is not open for sign-up';
+		}
+		if (trip?.password !== password) {
+			return 'That is the wrong password my friend';
 		}
 		const user = await getCurrentUser();
 		if (!user) {
@@ -136,7 +150,8 @@ export const getTripsLeader = query(async () => {
 			time: true,
 			title: true,
 			id: true,
-			status: true
+			status: true,
+			password: true
 		},
 		with: {
 			leaders: {
@@ -163,7 +178,8 @@ export const getTripLeader = query(v.object({ id: v.string() }), async ({ id }) 
 			title: true,
 			id: true,
 			formElements: true,
-			status: true
+			status: true,
+			password: true
 		},
 		with: {
 			leaders: {
@@ -183,9 +199,10 @@ export const updateTrip = command(
 		title: v.string(),
 		activity: v.string(),
 		description: v.string(),
+		password: v.union([v.string(), v.null()]),
 		time: v.date()
 	}),
-	async ({ id, title, activity, description, time }) => {
+	async ({ id, title, activity, description, time, password }) => {
 		if (!hasPermission({ trip: ['update'] })) {
 			throw new Error('Permission Denied');
 		}
@@ -195,7 +212,8 @@ export const updateTrip = command(
 				title,
 				activity,
 				description,
-				time
+				time,
+				password
 			})
 			.where(eq(trips.id, id));
 		return true;

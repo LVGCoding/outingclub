@@ -3,7 +3,6 @@ import { getPage } from '../../query/page.remote';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params }) => {
-	console.log('slug', params.slug || '/');
 	const page = await getPage({ path: params.slug, pageCategory: 'club' });
 	for (const i of page.content ?? []) {
 		for (const j of i.columns) {

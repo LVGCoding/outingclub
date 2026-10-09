@@ -18,7 +18,9 @@
 					<Card.Header class="p-0">
 						<Card.Title>{trip.title}: {trip.activity}</Card.Title>
 						<Card.Action class="hidden max-w-40 md:block">
-							<Button variant="link" href="/trip/{trip.id}">Sign Up</Button>
+							<Button class="bg-[#199619bf] text-white hover:bg-[#199619bb]" href="/trip/{trip.id}">
+								Sign Up
+							</Button>
 						</Card.Action>
 					</Card.Header>
 					<Card.Content class="p-0 pl-2">

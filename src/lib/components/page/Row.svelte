@@ -10,14 +10,16 @@
 		type CardT,
 		type ImageLinkT,
 		type RowT,
-		type CoolButtonT
+		type CoolButtonT,
+		type VideoT
 	} from './Page.svelte';
 	import Pdf from './Pdf.svelte';
 	import { cn, Swal2 } from '#lib/utils';
-	import { GripVertical } from 'lucide-svelte';
+	import { GripHorizontal } from 'lucide-svelte';
 	import { getPageStuff } from './context';
 	import * as ContextMenu from '#lib/components/ui/context-menu';
 	import CoolButton from './CoolButton.svelte';
+	import Video from './Video.svelte';
 
 	let {
 		row = $bindable(),
@@ -95,13 +97,14 @@
 		}
 	}}
 	style="row-gap: 1.5rem;"
-	class={cn('relative flex flex-wrap justify-center', {
-		'rounded border-4 bg-card/10': editMode,
+	class={cn('relative flex flex-wrap justify-center ', {
+		'rounded border-4 bg-card/10 pt-8': editMode,
 		'bg-card': dndState.isDragging && meDragging,
 		'gap-6': !editMode
 	})}>
 	{#if editMode}
-		<GripVertical class="drag-handle absolute top-1 left-1" />
+		<GripHorizontal
+			class="drag-handle absolute top-1 left-[50%] translate-x-[-50%] rounded bg-card" />
 	{/if}
 	{#if editMode}
 		{@render moveCol({ i: 0 })}
@@ -131,6 +134,8 @@
 								rowIndex={index}
 								{editMode}
 								bind:coolButton={row.columns[i] as CoolButtonT} />
+						{:else if item.type === 'video'}
+							<Video {props} rowIndex={index} {editMode} bind:video={row.columns[i] as VideoT} />
 						{/if}
 					{:else}
 						{#if item.type === 'row'}
@@ -149,6 +154,8 @@
 								rowIndex={index}
 								{editMode}
 								coolButton={row.columns[i] as CoolButtonT} />
+						{:else if item.type === 'video'}
+							<Video {props} rowIndex={index} {editMode} bind:video={row.columns[i] as VideoT} />
 						{/if}
 					{/if}
 				{/snippet}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { FileType } from '#lib/server/db/schema';
 	import { getFileContext } from '../../../routes/fileState';
-	import Button, { buttonVariants } from '../ui/button/button.svelte';
+	import { Button, buttonVariants } from '../ui/button';
 	import * as Card from '../ui/card';
 	import * as DropdownMenu from '../ui/dropdown-menu';
 	import * as Dialog from '../ui/dialog';

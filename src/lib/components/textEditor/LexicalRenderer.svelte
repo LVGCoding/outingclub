@@ -63,5 +63,6 @@
 		position: static;
 		width: 100%;
 		margin: 0 !important;
+		max-width: unset !important;
 	}
 </style>

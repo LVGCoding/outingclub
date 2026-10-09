@@ -143,7 +143,7 @@
 					}}>
 					+
 				</Button>
-				<Label>Add Element</Label>
+				<Label>Add Option</Label>
 			</div>
 		{:else}
 			{#each element.options as option, i (i)}
@@ -155,55 +155,57 @@
 		{/if}
 	</RadioGroup.Root>
 {:else if element.type === 'checkbox'}
-	{#if editMode}
-		<DraggableList bind:items={element.options}>
-			{#snippet card({ cardProps, item, handelProps, index })}
-				<div {...cardProps} class={cn('flex items-center space-x-2', cardProps.class)}>
-					<GripVertical {...handelProps} class={cn('mr-1', handelProps.class)} />
-					<Checkbox disabled={editMode} value={item.value} id={`r${cardProps.index}`} />
-					<Label for={`r${cardProps.index}`}>
-						<input class="rounded bg-card p-1" bind:value={item.value} />
-					</Label>
-					<Button
-						size="xs"
-						variant="outline"
-						onclick={() => {
-							element.options.splice(index, 1);
-						}}>
-						-
-					</Button>
-				</div>
-			{/snippet}
-		</DraggableList>
-		<div class={cn('flex items-center space-x-2')}>
-			<Button
-				size="xs"
-				variant="outline"
-				onclick={() => {
-					element.options.push({ value: '', id: Math.random(), order: element.options.length });
-				}}>
-				+
-			</Button>
-			<Label>Add Element</Label>
-		</div>
-	{:else}
-		{#each element.options as option, i (i)}
-			<div class="flex items-center space-x-2">
-				<Checkbox
-					disabled={editMode}
-					checked={response?.value?.includes(option.value)}
-					onCheckedChange={(e) => {
-						touched = true;
-						valid = true;
-						if (!response) response = { label: element.label, type: 'checkbox', value: [] };
-						if (element.type !== 'checkbox' || !Array.isArray(response?.value)) return;
-						response.value = e
-							? [...response.value, option.value]
-							: response.value.filter((o) => o !== option.value);
-					}}
-					id={`r${i}`} />
-				<Label for={`r${i}`}>{option.value}</Label>
+	<div>
+		{#if editMode}
+			<DraggableList bind:items={element.options}>
+				{#snippet card({ cardProps, item, handelProps, index })}
+					<div {...cardProps} class={cn('flex items-center space-x-2', cardProps.class)}>
+						<GripVertical {...handelProps} class={cn('mr-1', handelProps.class)} />
+						<Checkbox disabled={editMode} value={item.value} id={`r${cardProps.index}`} />
+						<Label for={`r${cardProps.index}`}>
+							<input class="rounded bg-card p-1" bind:value={item.value} />
+						</Label>
+						<Button
+							size="xs"
+							variant="outline"
+							onclick={() => {
+								element.options.splice(index, 1);
+							}}>
+							-
+						</Button>
+					</div>
+				{/snippet}
+			</DraggableList>
+			<div class={cn('flex items-center space-x-2')}>
+				<Button
+					size="xs"
+					variant="outline"
+					onclick={() => {
+						element.options.push({ value: '', id: Math.random(), order: element.options.length });
+					}}>
+					+
+				</Button>
+				<Label>Add Option</Label>
 			</div>
-		{/each}
-	{/if}
+		{:else}
+			{#each element.options as option, i (i)}
+				<div class="flex items-center space-x-2">
+					<Checkbox
+						disabled={editMode}
+						checked={response?.value?.includes(option.value)}
+						onCheckedChange={(e) => {
+							touched = true;
+							valid = true;
+							if (!response) response = { label: element.label, type: 'checkbox', value: [] };
+							if (element.type !== 'checkbox' || !Array.isArray(response?.value)) return;
+							response.value = e
+								? [...response.value, option.value]
+								: response.value.filter((o) => o !== option.value);
+						}}
+						id={`r${i}`} />
+					<Label for={`r${i}`}>{option.value}</Label>
+				</div>
+			{/each}
+		{/if}
+	</div>
 {/if}

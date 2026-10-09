@@ -15,7 +15,7 @@
 		updateTrip
 	} from '../../../query/trips.remote';
 	import DraggableList from '#lib/components/draggableList/DraggableList.svelte';
-	import { CheckIcon, ChevronsUpDownIcon, GripVertical } from 'lucide-svelte';
+	import { CheckIcon, ChevronsUpDownIcon, GripHorizontal } from 'lucide-svelte';
 	import { cn } from '#lib/utils';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import Input from '#lib/components/ui/input/input.svelte';
@@ -33,7 +33,6 @@
 	let tripPromise = $derived(getTripLeader({ id: page.params.id ?? '' }));
 	let leadersPromise = $derived(getLeaders());
 	let leaders = $derived(leadersPromise.current);
-	$inspect(leaders);
 	let trip = $derived.by(() => {
 		let temp = $state(tripPromise.current);
 
@@ -67,9 +66,9 @@
 	}
 </script>
 
-<div class="flex flex-col items-center justify-center" bind:this={rect}>
+<div class="flex flex-col items-center justify-center">
 	{#if trip}
-		<Card.Root class="w-[98%] p-4 lg:w-[80%]">
+		<Card.Root class="w-[98%] p-4 lg:w-[80%]" bind:ref={rect}>
 			<div class="flex items-center justify-center">
 				<ToggleGroup.Root class="w-80" type="single" value="a">
 					<ToggleGroup.Item class="flex-1" value="a">Trip</ToggleGroup.Item>
@@ -162,6 +161,7 @@
 						</Command.Root>
 					</Popover.Content>
 				</Popover.Root>
+				Password: <Input bind:value={trip.password} />
 				Description:
 				<Editor editable={true} bind:content={trip.description} />
 				<DateTimePicker
@@ -176,7 +176,8 @@
 							title: trip.title ?? '',
 							activity: trip.activity ?? '',
 							description: trip.description ?? '',
-							time: trip.time ?? new Date()
+							time: trip.time ?? new Date(),
+							password: trip.password || null
 						});
 						if (result) {
 							Swal2.fire('Success', 'Trip updated successfully', 'success');
@@ -262,14 +263,13 @@
 				<h2 class="text-2xl">Sign Up Form</h2>
 				<DraggableList
 					items={formElements}
-					handelOffest={-60}
-					width={(rect?.getBoundingClientRect().width ?? 100) * 0.98}>
+					width={(rect?.getBoundingClientRect().width || 100) * 0.96}>
 					{#snippet card({ cardProps, handelProps, index })}
-						<Card.Root {...cardProps} class={cn('relative flex', cardProps.class)}>
-							<GripVertical
+						<Card.Root {...cardProps} class={cn('relative flex pt-4', cardProps.class)}>
+							<GripHorizontal
 								{...handelProps}
 								class={cn(
-									'absolute top-[50%] left-0 mr-1 translate-y-[-50%]',
+									'absolute top-0 left-[50%] mr-1 translate-x-[-50%]',
 									handelProps.class
 								)} />
 							<Card.Header>
@@ -307,7 +307,7 @@
 											<Select.Item value="text">Text</Select.Item>
 											<Select.Item value="number">Number</Select.Item>
 											<Select.Item value="date">Date</Select.Item>
-											<Select.Item value="textarea">Textarea</Select.Item>
+											<Select.Item value="textarea">Paragraph</Select.Item>
 											<Select.Item value="radio">Radio Buttons</Select.Item>
 											<Select.Item value="checkbox">Checkboxes</Select.Item>
 										</Select.Content>

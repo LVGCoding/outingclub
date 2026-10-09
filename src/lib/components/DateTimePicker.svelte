@@ -1,12 +1,11 @@
 <script lang="ts">
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
-	import { getLocalTimeZone } from '@internationalized/date';
 	import * as Popover from '#lib/components/ui/popover/';
 	import Calendar from '#lib/components/ui/calendar/calendar.svelte';
 	import { Button } from '#lib/components/ui/button/';
 	import { Input } from '#lib/components/ui/input/';
 	import { Label } from '#lib/components/ui/label/';
-	import type { CalendarDate, ZonedDateTime } from '@internationalized/date';
+	import type { ZonedDateTime } from '@internationalized/date';
 
 	const id = $props.id();
 

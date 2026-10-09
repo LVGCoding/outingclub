@@ -191,6 +191,30 @@
 		},
 
 		{
+			id: 'class',
+			header: 'Class',
+			accessorKey: 'yearJoined',
+			cell: ({ row }) => getClassName(row.original.user.yearJoined),
+
+			filterFn: (row, columnId, value) => {
+				if (!value) return true;
+				return value.includes(getClassName(row.original.user.yearJoined));
+			},
+
+			meta: {
+				filter: 'select',
+				filterPlaceholder: 'Any class',
+				filterOptions: [
+					{ label: 'Freshman', value: 'Freshman' },
+					{ label: 'Sophomore', value: 'Sophomore' },
+					{ label: 'Junior', value: 'Junior' },
+					{ label: 'Senior', value: 'Senior' },
+					{ label: 'Senior+', value: 'Senior+' },
+					{ label: 'Grad Student', value: 'Grad Student' }
+				]
+			}
+		},
+		{
 			id: 'trips',
 			header: 'Trips',
 

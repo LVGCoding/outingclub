@@ -286,7 +286,7 @@
 					</Card.Header>
 					<Card.Content class="p-0 pl-2">
 						<Card.Description>
-							{trip.description}
+							<p class="text-3xl">Password: {trip.password ?? 'No Password'}</p>
 							<div class="">
 								<p class="pr-1 font-bold">Leaders:</p>
 								{#each trip.leaders as leader, index (index)}
@@ -417,7 +417,7 @@
 					</Card.Header>
 					<Card.Content class="p-0 pl-2">
 						<Card.Description>
-							{trip.description}
+							<Editor content={trip.description} />
 							<div class="">
 								<p class="pr-1 font-bold">Leaders:</p>
 								{#each trip.leaders as leader, index (index)}

@@ -13,7 +13,7 @@
 		{ value: 'image', label: 'Image' },
 		{ value: 'pdf', label: 'PDF' },
 		{ value: 'bio', label: 'Bio' },
-		{ value: 'cool-button', label: 'Cool Button' }
+		{ value: 'video', label: 'Video' }
 	];
 
 	export type dragItem = { id: number; type: string };
@@ -56,6 +56,11 @@
 				img: string;
 				text: string;
 		  }
+		| {
+				type: 'video';
+				src: string;
+				title: string;
+		  }
 	);
 
 	export type RowT = PageContent & { type: 'row' };
@@ -64,6 +69,7 @@
 	export type PdfT = PageContent & { type: 'pdf' };
 	export type CardT = PageContent & { type: 'card' };
 	export type CoolButtonT = PageContent & { type: 'cool-button' };
+	export type VideoT = PageContent & { type: 'video' };
 </script>
 
 <script lang="ts">
@@ -193,6 +199,13 @@
 				email: '',
 				bio: ''
 			};
+		} else if (type === 'video') {
+			pageStuff.creatingItem = {
+				type: 'video',
+				id: Math.random(),
+				title: '',
+				src: ''
+			};
 		}
 	}
 </script>
@@ -300,7 +313,7 @@
 		</ActionWrapper>
 	</h1>
 {:else}
-	<h1 class="flex items-center justify-center font-roboto text-4xl font-light text-shadow-md">
+	<h1 class="flex items-center justify-center text-4xl font-light text-shadow-md">
 		{title}
 	</h1>
 {/if}

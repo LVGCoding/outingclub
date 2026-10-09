@@ -14,7 +14,8 @@ export const trips = sqliteTable('trips', {
 	status: text('status', { enum: ['hidden', 'pending', 'completed', 'cancelled'] })
 		.notNull()
 		.default('hidden'),
-	formElements: text('form_elements', { mode: 'json' })
+	formElements: text('form_elements', { mode: 'json' }),
+	password: text('password')
 });
 export type TripStatus = (typeof trips.status.enumValues)[number];
 export const tripStatusValid = v.picklist(trips.status.enumValues);

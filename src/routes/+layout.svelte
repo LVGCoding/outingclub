@@ -2,11 +2,26 @@
 	import './layout.css';
 	import { toggleMode, ModeWatcher } from 'mode-watcher';
 	import type { LayoutProps } from './$types';
-	import Button from '#lib/components/ui/button/button.svelte';
+	import { Button } from '#lib/components/ui/button';
 	import { enhance } from '$app/forms';
 	import { cn, mulberry32 } from '#lib/utils';
 	import { page } from '$app/state';
-	import { ChevronDown, ChevronRight, CircleUserRound, MoonIcon, SunIcon } from 'lucide-svelte';
+	import {
+		ChevronDown,
+		ChevronRight,
+		CircleUserRound,
+		ClipboardPen,
+		Compass,
+		FaceGrinning,
+		FaceNeutral,
+		House,
+		MessagesSquare,
+		MoonIcon,
+		Park,
+		SunIcon,
+		UserGroup,
+		type LucideIcon
+	} from '@lucide/svelte';
 	import { onMount } from 'svelte';
 	import { goofyMode } from '#lib/goofy/goofyMode.svelte';
 	import { setFileContext, type FileState } from './fileState';
@@ -52,16 +67,31 @@
 
 <svelte:body bind:clientWidth={width} />
 
-{#snippet link({ label, href }: { label: string; href: string | undefined })}
+{#snippet link({
+	label,
+	href,
+	icon,
+	noHover
+}: {
+	label: string;
+	icon?: LucideIcon;
+	href: string | undefined;
+	noHover?: boolean;
+})}
+	{@const Icon = icon}
 	<li class="grow">
 		<a
 			class={cn(
-				'block border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
+				'flex items-center gap-1 border-b-2 border-transparent px-2 py-3 marker:hidden  lg:p-4 ',
 				{
-					'border-accent': page.url.pathname === href
+					'border-accent': page.url.pathname === href,
+					'hover:bg-[#199619bf]': !noHover
 				}
 			)}
 			{href}>
+			{#if icon}
+				<Icon size={15} class="inline" />
+			{/if}
 			{label}
 		</a>
 	</li>
@@ -69,47 +99,53 @@
 {#snippet dropdown({
 	label,
 	href,
-	items
+	items,
+	icon
 }: {
 	label: string;
 	href: string | undefined;
+	icon?: LucideIcon;
 	items: { label: string; href: string }[];
 })}
+	{@const Icon = icon}
 	{@const id = `dropdown-${Math.random().toString(36).slice(2)}`}
-	{#if width > 800}
-		<div class="group/dd relative">
-			<a
-				type="button"
-				{href}
-				class={cn(
-					'flex items-center border-b-2 border-transparent px-0 py-3 marker:hidden hover:border-accent lg:p-4',
-					{
-						'border-accent': page.url.pathname === href
-					}
-				)}
-				aria-haspopup="true">
-				{label}
-				<ChevronDown size={16} />
-			</a>
-			<div
-				class="invisible absolute top-full left-0 z-20 pt-3 opacity-0 transition-opacity duration-200 group-focus-within/dd:visible group-focus-within/dd:opacity-100 group-hover/dd:visible group-hover/dd:opacity-100">
-				<ul
-					class="min-w-50 rounded-xl border border-white/10 bg-black/80 p-2 text-white backdrop-blur">
-					{#each items as item, i (i)}
-						<li>
-							<a
-								href={item.href}
-								class="block rounded-md px-3 py-2 text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white">
-								{item.label}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</div>
+
+	<div class="group/dd relative hidden lg:block">
+		<a
+			type="button"
+			{href}
+			class={cn(
+				'flex items-center gap-1 border-b-2 border-transparent px-0 py-3 marker:hidden hover:bg-[#199619bf] lg:p-4',
+				{
+					'border-accent': page.url.pathname === href
+				}
+			)}
+			aria-haspopup="true">
+			{#if icon}
+				<Icon size={15} class="inline" />
+			{/if}
+			{label}
+			<ChevronDown size={15} />
+		</a>
+		<div
+			class="invisible absolute top-full left-0 z-20 pt-3 opacity-0 transition-opacity duration-200 group-focus-within/dd:visible group-focus-within/dd:opacity-100 group-hover/dd:visible group-hover/dd:opacity-100">
+			<ul
+				class="min-w-50 rounded-xl border border-white/10 bg-black/80 p-2 text-white backdrop-blur">
+				{#each items as item, i (i)}
+					<li>
+						<a
+							href={item.href}
+							class="flex items-center rounded-md px-3 py-2 text-sm font-medium text-white/90 hover:bg-[#199619bf] hover:text-white">
+							{item.label}
+						</a>
+					</li>
+				{/each}
+			</ul>
 		</div>
-	{:else}
-		<label for={id} class="dropdown-menu-toggle flex items-center">
-			{@render link({ href, label })}
+	</div>
+	<div class="contents lg:hidden">
+		<label for={id} class="dropdown-menu-toggle flex items-center hover:bg-[#199619bf]">
+			{@render link({ href, label, icon, noHover: true })}
 			<ChevronRight />
 		</label>
 		<input {id} type="checkbox" class="dropdown-menu-toggle hidden" />
@@ -118,14 +154,16 @@
 				{@render link({ href: item.href, label: item.label })}
 			{/each}
 		</div>
-	{/if}
+	</div>
 {/snippet}
 <ModeWatcher defaultMode="dark" />
 <svelte:head>
 	<link rel="icon" href="/ROC_favicon.png" />
 	<title>Rpi Outing Trips</title>
 </svelte:head>
-<header class="dark flex flex-wrap items-center border-b bg-background px-6 py-2 lg:px-16 lg:py-0">
+<header
+	style="font:normal 'Roboto Slab', Times, serif;"
+	class="dark flex flex-wrap items-center border-b bg-background px-6 py-2 lg:px-16 lg:py-0">
 	<div class="flex flex-1 items-center justify-between">
 		<a href="/">
 			<img style="min-width:48px;" class="h-12" alt="logo" src="/logo.png" />
@@ -148,11 +186,12 @@
 	<div class="hidden w-full lg:flex lg:w-auto lg:items-center" id="menu">
 		<nav>
 			<ul class="items-center justify-between pt-4 text-base text-foreground lg:flex lg:pt-0">
-				{@render link({ href: '/', label: 'Home' })}
+				{@render link({ href: '/', label: 'Home', icon: House })}
 				{#if data.paths['activity']}
 					{@render dropdown({
 						label: 'Activities',
 						href: undefined,
+						icon: Compass,
 						items: data.paths['activity'].map((path) => ({
 							label: path.title,
 							href: path.link ? path.path : `/activities/${path.path}`
@@ -163,6 +202,7 @@
 					{@render dropdown({
 						label: 'Club',
 						href: undefined,
+						icon: UserGroup,
 						items: data.paths['club'].map((path) => ({
 							label: path.title,
 							href: path.link ? path.path : `/club/${path.path}`
@@ -173,16 +213,18 @@
 					{@render dropdown({
 						label: 'Social Media',
 						href: undefined,
+						icon: MessagesSquare,
 						items: data.paths['social'].map((path) => ({
 							label: path.title,
 							href: path.path
 						}))
 					})}
 				{/if}
-				{@render link({ href: '/trip', label: 'Trips' })}
+				{@render link({ href: '/trip', label: 'Trips', icon: Park })}
 				{#if manageItems.length > 0}
 					{@render dropdown({
 						label: 'Manage',
+						icon: ClipboardPen,
 						href: undefined,
 						items: manageItems
 					})}
@@ -210,8 +252,17 @@
 				<Button href="/profile" class="ml-2" variant="outline" size="icon">
 					<CircleUserRound />
 				</Button>
-				<Button class="ml-2" variant="outline" size="icon" onclick={() => goofyMode.toggle()}>
-					{goofyMode.enabled ? '🤨' : '🤪'}
+				<Button
+					class="ml-2"
+					title="Turn on Goofy mode"
+					variant="outline"
+					size="icon"
+					onclick={() => goofyMode.toggle()}>
+					{#if goofyMode.enabled}
+						<FaceNeutral />
+					{:else}
+						<FaceGrinning />
+					{/if}
 				</Button>
 			</ul>
 		</nav>
@@ -220,7 +271,7 @@
 <div
 	class="height-full w-full grow overflow-y-auto p-5 lg:p-10"
 	style="background-image: url({backdrop?.url});  background-size: cover;
-	background-position: center;
+	background-position: center; font-family: 'Roboto Slab', serif;
 ">
 	{@render children()}
 </div>
