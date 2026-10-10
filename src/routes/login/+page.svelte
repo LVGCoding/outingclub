@@ -10,6 +10,7 @@
 	import * as Tabs from '#lib/components/ui/tabs/';
 	import { Swal2 } from '#lib/utils';
 	import * as Select from '#lib/components/ui/select/';
+	import PhoneNumberInput from '#lib/components/PhoneNumberInput.svelte';
 
 	let { form }: PageProps = $props();
 	if (page?.url.searchParams.get('reason') === 'not_logged_in') {
@@ -167,7 +168,7 @@
 								<div>
 									<Label for="register-phone">Phone Number</Label>
 
-									<Input
+									<PhoneNumberInput
 										id="register-phone"
 										type="tel"
 										name="phone-reg"
@@ -176,7 +177,7 @@
 										class="mt-2 h-11" />
 								</div>
 								<div>
-									<Label for="register-phone">Emergency Contact Name</Label>
+									<Label for="emergency-register-name">Emergency Contact Name</Label>
 
 									<Input
 										id="emergency-register-name"
@@ -186,9 +187,9 @@
 										class="mt-2 h-11" />
 								</div>
 								<div>
-									<Label for="register-phone">Emergency Contact Phone Number</Label>
+									<Label for="emergency-register-phone">Emergency Contact Phone Number</Label>
 
-									<Input
+									<PhoneNumberInput
 										id="emergency-register-phone"
 										type="tel"
 										name="phone-reg-emergency"

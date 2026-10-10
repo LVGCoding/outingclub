@@ -67,6 +67,7 @@
 		"@thisux/sveltednd": "^0.8.0",
 		"@types/jsdom": "^30.0.0",
 		"jsdom": "^30.1.1",
+		"libphonenumber-js": "^1.13.15",
 		"lucide-svelte": "^1.0.1",
 		"mode-watcher": "^1.1.0",
 		"svelte-lexical": "^0.6.5",

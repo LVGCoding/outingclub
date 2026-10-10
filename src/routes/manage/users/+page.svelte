@@ -25,6 +25,7 @@
 	import * as Select from '#lib/components/ui/select/';
 	import { Textarea } from '#lib/components/ui/textarea/';
 	import { toast } from 'svelte-sonner';
+	import PhoneNumberInput from '#lib/components/PhoneNumberInput.svelte';
 
 	const data = getUsers();
 	type User = NonNullable<typeof data.current>[number];
@@ -524,7 +525,7 @@
 				<div>
 					<Label for="phone">Phone Number</Label>
 
-					<Input id="phone" type="tel" bind:value={phoneNumber} class="mt-2" />
+					<PhoneNumberInput id="phone" type="tel" bind:value={phoneNumber} class="mt-2" />
 				</div>
 
 				<div>

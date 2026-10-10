@@ -3,7 +3,7 @@ import { hasPermission } from '#lib/server/auth';
 import { db } from '#lib/server/db/';
 import { pages, pageCategoryValid } from '#lib/server/db/schema';
 import { command, query } from '$app/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, asc, desc, sql, inArray } from 'drizzle-orm';
 import * as v from 'valibot';
 
 export const getPage = query(
@@ -54,6 +54,12 @@ export const duplicatePage = command(
 	async ({ id }) => {
 		const page = await getPageById({ id });
 		if (!page) return;
+		const lastOrder = await db.query.pages.findFirst({
+			columns: { order: true },
+			orderBy: desc(pages.order),
+			where: eq(pages.pageCategory, page.pageCategory ?? 'activity')
+		});
+
 		const new_page = await db
 			.insert(pages)
 			.values({
@@ -61,7 +67,8 @@ export const duplicatePage = command(
 				path: page.path + '-copy',
 				link: false,
 				pageCategory: page.pageCategory ?? 'activity',
-				content: page.content
+				content: page.content,
+				order: lastOrder?.order ?? 0
 			})
 			.returning();
 		return new_page;
@@ -75,8 +82,10 @@ export const getPaths = query(async () => {
 			pageCategory: true,
 			title: true,
 			id: true,
-			link: true
-		}
+			link: true,
+			order: true
+		},
+		orderBy: asc(pages.order)
 	});
 	return paths;
 });
@@ -91,6 +100,11 @@ export const createExternalPage = command(
 		if (!hasPermission({ page: ['create'] })) {
 			throw new Error('Permission Denied');
 		}
+		const lastOrder = await db.query.pages.findFirst({
+			columns: { order: true },
+			orderBy: desc(pages.order),
+			where: eq(pages.pageCategory, category ?? 'activity')
+		});
 		const page = await db
 			.insert(pages)
 			.values({
@@ -98,7 +112,8 @@ export const createExternalPage = command(
 				path: link,
 				link: true,
 				pageCategory: category,
-				content: []
+				content: [],
+				order: lastOrder?.order ?? 0
 			})
 			.returning();
 		return page;
@@ -113,6 +128,11 @@ export const createInternalPage = command(
 		if (!hasPermission({ page: ['create'] })) {
 			throw new Error('Permission Denied');
 		}
+		const lastOrder = await db.query.pages.findFirst({
+			columns: { order: true },
+			orderBy: desc(pages.order),
+			where: eq(pages.pageCategory, category ?? 'activity')
+		});
 		const page = await db
 			.insert(pages)
 			.values({
@@ -120,7 +140,8 @@ export const createInternalPage = command(
 				path: '',
 				link: false,
 				pageCategory: category,
-				content: []
+				content: [],
+				order: lastOrder?.order ?? 0
 			})
 			.returning();
 		return page[0].id;
@@ -161,5 +182,33 @@ export const updatePage = command(
 				content
 			})
 			.where(eq(pages.id, id));
+	}
+);
+
+export const updatePageOrder = command(
+	v.array(v.object({ id: v.string(), order: v.number() })),
+	async (items) => {
+		if (!hasPermission({ page: ['update'] })) {
+			throw new Error('Permission Denied');
+		}
+		if (items.length > 0) {
+			await db
+				.update(pages)
+				.set({
+					order: sql`CASE
+            ${sql.join(
+							items.map((item) => sql`WHEN ${pages.id} = ${item.id} THEN ${item.order}`),
+							sql` `
+						)}
+            ELSE ${pages.order}
+          END`
+				})
+				.where(
+					inArray(
+						pages.id,
+						items.map((item) => item.id)
+					)
+				);
+		}
 	}
 );

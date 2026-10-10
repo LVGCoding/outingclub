@@ -1,10 +1,12 @@
 <script lang="ts">
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
+	import PhoneNumberInput from '#lib/components/PhoneNumberInput.svelte';
 	import { Button } from '#lib/components/ui/button/';
 	import * as Card from '#lib/components/ui/card/';
 	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
 	import * as Select from '#lib/components/ui/select/';
+	import Separator from '#lib/components/ui/separator/separator.svelte';
 	import { getCurrentUserQuery, updateCurrentUser } from '../query/trips.remote';
 
 	let user = $state(await getCurrentUserQuery());
@@ -12,7 +14,13 @@
 		new Date().getMonth() >= 6 ? new Date().getFullYear() : new Date().getFullYear() - 1;
 </script>
 
-<div class="flex flex-col items-center justify-center gap-2">
+<svelte:head>
+	<title>Profile</title>
+</svelte:head>
+
+<h1 class="flex items-center justify-center text-6xl font-light text-shadow-md">Profile</h1>
+<Separator />
+<div class="mt-8 flex flex-col items-center justify-center gap-2">
 	<Card.Root class="w-[98%] p-4 lg:w-[80%]">
 		<div class="flex flex-col gap-5">
 			{#if user}
@@ -74,7 +82,7 @@
 				<div>
 					<Label for="register-phone">Phone Number</Label>
 
-					<Input
+					<PhoneNumberInput
 						id="register-phone"
 						type="tel"
 						name="phone-reg"
@@ -97,7 +105,7 @@
 				<div>
 					<Label for="register-phone">Emergency Contact Phone Number</Label>
 
-					<Input
+					<PhoneNumberInput
 						id="emergency-register-phone"
 						type="tel"
 						name="phone-reg-emergency"

@@ -5,16 +5,19 @@
 		createExternalPage,
 		createInternalPage,
 		deletePage,
-		duplicatePage
+		duplicatePage,
+		updatePageOrder
 	} from '../../query/page.remote';
 	import Button, { buttonVariants } from '#lib/components/ui/button/button.svelte';
-	import { Swal2 } from '#lib/utils';
+	import { cn, Swal2 } from '#lib/utils';
 	import * as Dialog from '#lib/components/ui/dialog/';
 	import { Label } from '#lib/components/ui/label/';
 	import { Input } from '#lib/components/ui/input/';
 	import { goto, invalidate } from '$app/navigation';
 	import ActionWrapper from '#lib/components/ActionWrapper.svelte';
 	import type { PageCategory } from '#lib/server/db/schema';
+	import DraggableList from '#lib/components/draggableList/DraggableList.svelte';
+	import { GripVertical } from '@lucide/svelte';
 
 	let openExternalDialog = $state(false);
 	let socialValue = $state({
@@ -44,8 +47,8 @@
 								title: 'What type of page do you want',
 								input: 'radio',
 								inputOptions: {
-									internal: 'Internal',
-									external: 'External'
+									internal: 'Create a new page',
+									external: 'Link to a page'
 								}
 							});
 							if (!res.isConfirmed) return;
@@ -71,52 +74,61 @@
 				</Card.Action>
 			</Card.Header>
 			<Card.Content>
-				{#each pages as page (page.id)}
-					<Card.Root class="p-2">
-						<Card.Header>
-							<Card.Title>
-								{page.title}
-							</Card.Title>
-							<Card.Description>
-								Link:
-								{page.path}
-							</Card.Description>
-							<Card.Action>
-								{#if !page.link}
-									<Button
+				<DraggableList
+					updated={(items) => {
+						updatePageOrder(items).catch(() => {
+							Swal2.fire('Failed', 'Reorder failed on server', 'error');
+						});
+					}}
+					items={pages}>
+					{#snippet card({ cardProps, handelProps, item: page })}
+						<Card.Root {...cardProps} class={cn('p-2', cardProps.class)}>
+							<Card.Header>
+								<Card.Title>
+									<GripVertical {...handelProps} class={cn('inline', cardProps.class)} />
+									{page.title}
+								</Card.Title>
+								<Card.Description>
+									Link:
+									{page.path}
+								</Card.Description>
+								<Card.Action>
+									{#if !page.link}
+										<Button
+											onclick={async () => {
+												await duplicatePage({ id: page.id });
+												await invalidate('app:paths');
+											}}
+											variant="link">
+											Duplicate Page
+										</Button>
+									{/if}
+									{#if !page.link}
+										<Button href={`/manage/pages/${page.id}`} variant="link">Edit Page</Button>
+									{/if}
+									<ActionWrapper
 										onclick={async () => {
-											await duplicatePage({ id: page.id });
+											let res = await Swal2.fire({
+												title: 'Are you sure?',
+												text: 'This action cannot be undone.',
+												icon: 'warning',
+												showCancelButton: true,
+												confirmButtonText: 'Delete',
+												cancelButtonText: 'Cancel'
+											});
+											if (!res.isConfirmed) return;
+											await deletePage({ id: page.id });
 											await invalidate('app:paths');
-										}}
-										variant="link">
-										Duplicate Page
-									</Button>
-								{/if}
-								{#if !page.link}
-									<Button href={`/manage/pages/${page.id}`} variant="link">Edit Page</Button>
-								{/if}
-								<ActionWrapper
-									onclick={async () => {
-										let res = await Swal2.fire({
-											title: 'Are you sure?',
-											text: 'This action cannot be undone.',
-											icon: 'warning',
-											showCancelButton: true,
-											confirmButtonText: 'Delete',
-											cancelButtonText: 'Cancel'
-										});
-										if (!res.isConfirmed) return;
-										await deletePage({ id: page.id });
-										await invalidate('app:paths');
-									}}>
-									{#snippet children({ spinnerIcon, props })}
-										<Button {...props} variant="link">{@render spinnerIcon()} Delete Page</Button>
-									{/snippet}
-								</ActionWrapper>
-							</Card.Action>
-						</Card.Header>
-					</Card.Root>
-				{/each}
+										}}>
+										{#snippet children({ spinnerIcon, props })}
+											<Button {...props} variant="link">{@render spinnerIcon()} Delete Page</Button>
+										{/snippet}
+									</ActionWrapper>
+								</Card.Action>
+							</Card.Header>
+						</Card.Root>
+					{/snippet}
+				</DraggableList>
 			</Card.Content>
 		</Card.Root>
 	{/each}

@@ -60,7 +60,8 @@ export const pages = sqliteTable('pages', {
 	content: text('content', { mode: 'json' }).notNull(),
 	link: integer('link', { mode: 'boolean' }).default(false),
 	pageCategory: text('page_category', { enum: ['activity', 'club', 'main', 'social'] }).notNull(),
-	path: text('path').notNull()
+	path: text('path').notNull(),
+	order: integer('order').notNull().default(1)
 });
 export type PageCategory = (typeof pages.pageCategory.enumValues)[number];
 export const pageCategoryValid = v.picklist(pages.pageCategory.enumValues);
