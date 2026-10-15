@@ -40,7 +40,7 @@
 		ChevronRight,
 		Funnel,
 		X
-	} from 'lucide-svelte';
+	} from '@lucide/svelte';
 
 	import * as Table from '#lib/components/ui/table';
 	import * as Popover from '#lib/components/ui/popover';
@@ -114,7 +114,7 @@
 	const pagination = $derived(table.atoms.pagination.get());
 	const rowModel = $derived(table.getRowModel());
 
-	const pageCount = $derived(Math.max(1, Math.ceil(rowModel.rows.length / pagination.pageSize)));
+	const pageCount = $derived(Math.max(1, Math.ceil(data.length / pagination.pageSize)));
 
 	function getColumnMeta(
 		column: (typeof table)['getAllColumns'] extends () => infer C
